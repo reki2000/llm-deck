@@ -9,7 +9,6 @@ import { llmHandler } from "./llm"
 // apiKey format: AWS_REGION:AWS_ACCESS_KEY_ID:AWS_SECRET_ACCESS_KEY
 export const claude21: llmHandler = async (apiKey, input, on) => {
   const keys = apiKey.split(":")
-  console.log(keys)
 
   const client = new BedrockRuntimeClient({
     region: keys[0],

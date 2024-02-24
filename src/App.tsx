@@ -47,6 +47,7 @@ const LLM_SETTINGS = [
 
 function App() {
   const [prompt, setPrompt] = useState("")
+  const [sending, setSending] = useState(false)
 
   const llms: LLM[] = LLM_SETTINGS.map(({ label, name, handler }) => {
     const [response, setResponse] = useState("")
@@ -65,14 +66,24 @@ function App() {
   })
 
   const handleSend = async () => {
-    for (const llm of llms) {
-      ;(async () => {
-        llm.setResponse("")
-        llm.breaker?.()
-        llm.breaker = await llm.handler(llm.credential, prompt, (delta) => {
-          llm.setDelta(delta)
-        })
-      })()
+    if (sending) {
+      for (const llm of llms) {
+        ;(async () => {
+          llm.breaker?.()
+        })()
+      }
+      setSending(false)
+    } else {
+      setSending(true)
+      for (const llm of llms) {
+        ;(async () => {
+          llm.setResponse("")
+          llm.breaker?.()
+          llm.breaker = await llm.handler(llm.credential, prompt, (delta) => {
+            llm.setDelta(delta)
+          })
+        })()
+      }
     }
   }
 
@@ -97,21 +108,28 @@ function App() {
           <Box>LLM Deck</Box>
           <Link href="https://github.com/reki2000/llm-deck">GitHub</Link>
         </Stack>
-        <Stack direction="row" alignItems="center">
+        <Stack direction="row" alignItems="center" spacing={1}>
           <TextField
             fullWidth
             multiline
             label="prompt; SHIFT+ENTER to Send"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            onKeyDown={(event) => event.shiftKey && event.key === "Enter" && handleSend()}
+            onKeyDown={(event) => {
+              if (event.shiftKey && event.key === "Enter") {
+                handleSend()
+                event.preventDefault()
+              }
+            }}
+            disabled={sending}
           />
           <Button
+            variant="contained"
             onClick={() => {
               handleSend()
             }}
           >
-            Send
+            {sending ? "Stop" : "Send"}
           </Button>
         </Stack>
         <Stack direction="row" spacing={2}>
