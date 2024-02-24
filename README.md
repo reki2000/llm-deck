@@ -4,11 +4,13 @@ This app lets you see responses from multiple LLMs at once.
 
 <img src="https://github.com/reki2000/llm-deck/assets/2533597/778af179-2cd4-496f-8b70-e8c6cfd2f846" width="600px">
 
+[DEMO SITE](https://reki2000.github.io/llm-deck/)
+
 ## How to use
 
 1. First, enter your API keys in the "credential" field.
 
-   **Your information will be stored ONLY in your browser's local storag and shared with 'Same Origin' hosts. Avoid using untrusted hosts.**
+   **Your information will be stored ONLY in your browser's cookie. Avoid using untrusted hosts.**
   - GPT4(OpenAI): OPENAI_API_KEY
   - Gemini(Google): ACCESS_KEY
   - Claude(AWS Bedrock): AWS_REGION:AWS_ACCESS_KEY_ID:AWS_SECRET_ACCESS_KEY (colon separeted)

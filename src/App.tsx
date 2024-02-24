@@ -18,6 +18,7 @@ import { gpt4turbo } from "./llm/openai"
 import { gemini1 } from "./llm/vertexai"
 
 import Markdown from "react-markdown"
+import { getCookie, setCookie } from "./cookie"
 
 type LLM = {
   name: string
@@ -43,7 +44,7 @@ function App() {
 
   const llms: LLM[] = LLM_SETTINGS.map(({ name, handler }) => {
     const [response, setResponse] = useState("")
-    const [credential, setCredential] = useState(localStorage.getItem(name) || "")
+    const [credential, setCredential] = useState(getCookie(name))
 
     return {
       name,
@@ -70,7 +71,7 @@ function App() {
 
   const handleCredentialChange = (llm: LLM, value: string) => {
     llm.setCredential(value)
-    localStorage.setItem(llm.name, value)
+    setCookie(llm.name, value)
   }
 
   const [showPassword, setShowPassword] = useState(false)
