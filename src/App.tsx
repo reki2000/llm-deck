@@ -1,48 +1,84 @@
-import { Box, Button, CssBaseline, Stack, TextField, Typography } from "@mui/material"
+import {
+  Box,
+  Button,
+  CssBaseline,
+  IconButton,
+  InputAdornment,
+  Stack,
+  TextField,
+} from "@mui/material"
+
+import Visibility from "@mui/icons-material/Visibility"
+import VisibilityOff from "@mui/icons-material/VisibilityOff"
+
 import { useState } from "react"
+import { claude21 } from "./llm/bedrock"
 import { llmHandler, llmStreahBreaker } from "./llm/llm"
-import gpt4turbo from "./llm/openai"
-import gemini1 from "./llm/vertexai"
+import { gpt4turbo } from "./llm/openai"
+import { gemini1 } from "./llm/vertexai"
+
+import Markdown from "react-markdown"
 
 type LLM = {
   name: string
+  handler: llmHandler
+
   response: string
   setResponse: React.Dispatch<React.SetStateAction<string>>
   setDelta: (s: string) => void
-  handler: llmHandler
   breaker?: llmStreahBreaker
+
+  credential: string
+  setCredential: React.Dispatch<React.SetStateAction<string>>
 }
 
 const LLM_SETTINGS = [
-  { name: "gpt4", handler: gpt4turbo },
-  { name: "gemini1", handler: gemini1 },
+  { name: "gpt4-turbo", handler: gpt4turbo },
+  { name: "gemini 1.0 pro", handler: gemini1 },
+  { name: "claude 2.1", handler: claude21 },
 ]
 
 function App() {
-  const credentials = JSON.parse(import.meta.env.VITE_GEMINI_API_JSON)
-  console.debug(credentials)
-  console.log(credentials)
-  console.log("test")
-
   const [prompt, setPrompt] = useState("")
 
   const llms: LLM[] = LLM_SETTINGS.map(({ name, handler }) => {
     const [response, setResponse] = useState("")
+    const [credential, setCredential] = useState(localStorage.getItem(name) || "")
 
-    const setDelta = (delta: string) => {
-      setResponse((response) => `${response}${delta}`)
+    return {
+      name,
+      response,
+      setResponse,
+      setDelta: (d) => setResponse((r) => `${r}${d}`),
+      handler,
+      credential,
+      setCredential,
     }
-
-    return { name, response, setResponse, setDelta, handler }
   })
 
   const handleSend = async () => {
     for (const llm of llms) {
-      llm.breaker?.()
-      llm.breaker = await llm.handler(prompt, (delta) => {
-        llm.setDelta(delta)
-      })
+      ;(async () => {
+        llm.setResponse("")
+        llm.breaker?.()
+        llm.breaker = await llm.handler(llm.credential, prompt, (delta) => {
+          llm.setDelta(delta)
+        })
+      })()
     }
+  }
+
+  const handleCredentialChange = (llm: LLM, value: string) => {
+    llm.setCredential(value)
+    localStorage.setItem(llm.name, value)
+  }
+
+  const [showPassword, setShowPassword] = useState(false)
+
+  const handleClickShowPassword = () => setShowPassword((show) => !show)
+
+  const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault()
   }
 
   return (
@@ -54,7 +90,6 @@ function App() {
             fullWidth
             multiline
             label="prompt"
-            id="prompt"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
           />
@@ -70,10 +105,29 @@ function App() {
           {llms.map((llm) => (
             <Stack key={llm.name} spacing={1} width="100%">
               <Box>{llm.name}</Box>
-              {llm.response.split("\n").map((line, index) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-                <Typography key={index}>{line}</Typography>
-              ))}
+              <TextField
+                label="credential"
+                type={showPassword ? "text" : "password"}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label="toggle password visibility"
+                        onClick={handleClickShowPassword}
+                        onMouseDown={handleMouseDownPassword}
+                        edge="end"
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+                value={llm.credential}
+                onChange={(e) => {
+                  handleCredentialChange(llm, e.target.value)
+                }}
+              />
+              <Markdown>{llm.response}</Markdown>
             </Stack>
           ))}
         </Stack>
