@@ -4,6 +4,7 @@ import {
   CssBaseline,
   IconButton,
   InputAdornment,
+  Link,
   Stack,
   TextField,
 } from "@mui/material"
@@ -31,18 +32,23 @@ type LLM = {
 
   credential: string
   setCredential: React.Dispatch<React.SetStateAction<string>>
+  label: string
 }
 
 const LLM_SETTINGS = [
-  { name: "gpt4-turbo", handler: gpt4turbo },
-  { name: "gemini 1.0 pro", handler: gemini1 },
-  { name: "claude 2.1", handler: claude21 },
+  { name: "gpt4-turbo", handler: gpt4turbo, label: "OPENAI_API_KEY" },
+  { name: "gemini 1.0 pro", handler: gemini1, label: "ACCESS_KEY" },
+  {
+    name: "claude 2.1",
+    handler: claude21,
+    label: "AWS_REGION:AWS_ACCESS_KEY_ID:AWS_SECRET_ACCESS_KEY",
+  },
 ]
 
 function App() {
   const [prompt, setPrompt] = useState("")
 
-  const llms: LLM[] = LLM_SETTINGS.map(({ name, handler }) => {
+  const llms: LLM[] = LLM_SETTINGS.map(({ label, name, handler }) => {
     const [response, setResponse] = useState("")
     const [credential, setCredential] = useState(getCookie(name))
 
@@ -54,6 +60,7 @@ function App() {
       handler,
       credential,
       setCredential,
+      label,
     }
   })
 
@@ -86,13 +93,18 @@ function App() {
     <>
       <CssBaseline />
       <Stack spacing={2} p={2}>
+        <Stack direction="row" spacing={2}>
+          <Box>LLM Deck</Box>
+          <Link href="https://github.com/reki2000/llm-deck">GitHub</Link>
+        </Stack>
         <Stack direction="row" alignItems="center">
           <TextField
             fullWidth
             multiline
-            label="prompt"
+            label="prompt; SHIFT+ENTER to Send"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
+            onKeyDown={(event) => event.shiftKey && event.key === "Enter" && handleSend()}
           />
           <Button
             onClick={() => {
@@ -107,7 +119,7 @@ function App() {
             <Stack key={llm.name} spacing={1} width="100%">
               <Box>{llm.name}</Box>
               <TextField
-                label="credential"
+                label={llm.label}
                 type={showPassword ? "text" : "password"}
                 InputProps={{
                   endAdornment: (
