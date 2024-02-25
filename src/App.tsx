@@ -16,7 +16,7 @@ import { useState } from "react"
 import { InstalledLLMs, llmStarter, llmStreahBreaker } from "./llm/llm"
 
 import Markdown from "react-markdown"
-import { getCookie, setCookie } from "./cookie"
+import { loadCredential, saveCredential } from "./credential"
 
 type LLM = {
   name: string
@@ -37,7 +37,7 @@ function App() {
   const llmStates = InstalledLLMs.map(({ label, name, start, apiKey }) =>
     useState<LLM>({
       name,
-      credential: apiKey || getCookie(name),
+      credential: apiKey || loadCredential(name),
       label,
       start,
       response: "",
@@ -140,7 +140,7 @@ function App() {
                 onChange={(e) => {
                   const credential = e.target.value
                   setLlm((s) => ({ ...s, credential }))
-                  setCookie(llm.name, credential)
+                  saveCredential(llm.name, credential)
                 }}
               />
               <Markdown>{`${llm.response}${

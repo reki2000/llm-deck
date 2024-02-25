@@ -10,7 +10,7 @@ This app lets you see responses from multiple LLMs at once.
 
 1. First, enter your API keys in the "credential" field.
 
-   **Your information will be stored ONLY in your browser's cookie. Avoid using untrusted hosts.**
+   **Your information will be stored ONLY in your browser's localStorage and will NEVER be sent to the host. However, avoid using untrusted hosts.**
   - GPT4(OpenAI): OPENAI_API_KEY
   - Gemini(Google): ACCESS_KEY
   - Claude(AWS Bedrock): AWS_REGION:AWS_ACCESS_KEY_ID:AWS_SECRET_ACCESS_KEY (colon separeted)
@@ -21,13 +21,15 @@ This app lets you see responses from multiple LLMs at once.
 
 To set up the development environment:
 
-- Add your API keys to the `.env` file because the local server uses HTTP, which doesn't support 'secure' cookies, whereas this app relies on 'secure' cookies.
+- Add your API keys to the `.env` file to overwrite values in the localStore.
 
 ```
 cp .env.sample .env
 
 # Set your API keys in .env
+```
 
+```
 npm install
 
 npm run dev
