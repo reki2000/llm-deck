@@ -13,92 +13,75 @@ import Visibility from "@mui/icons-material/Visibility"
 import VisibilityOff from "@mui/icons-material/VisibilityOff"
 
 import { useState } from "react"
-import { claude21 } from "./llm/bedrock"
-import { llmHandler, llmStreahBreaker } from "./llm/llm"
-import { gpt4turbo } from "./llm/openai"
-import { gemini1 } from "./llm/vertexai"
+import { InstalledLLMs, llmStarter, llmStreahBreaker } from "./llm/llm"
 
 import Markdown from "react-markdown"
 import { getCookie, setCookie } from "./cookie"
 
 type LLM = {
   name: string
-  handler: llmHandler
+  credential: string
+  label: string
 
   response: string
-  setResponse: React.Dispatch<React.SetStateAction<string>>
-  setDelta: (s: string) => void
-  breaker?: llmStreahBreaker
+  working: boolean
 
-  credential: string
-  setCredential: React.Dispatch<React.SetStateAction<string>>
-  label: string
+  start: llmStarter
+  stop?: llmStreahBreaker
 }
-
-const LLM_SETTINGS = [
-  { name: "gpt4-turbo", handler: gpt4turbo, label: "OPENAI_API_KEY" },
-  { name: "gemini 1.0 pro", handler: gemini1, label: "ACCESS_KEY" },
-  {
-    name: "claude 2.1",
-    handler: claude21,
-    label: "AWS_REGION:AWS_ACCESS_KEY_ID:AWS_SECRET_ACCESS_KEY",
-  },
-]
 
 function App() {
   const [prompt, setPrompt] = useState("")
-  const [sending, setSending] = useState(false)
+  const [sending, setSending] = useState(0)
 
-  const llms: LLM[] = LLM_SETTINGS.map(({ label, name, handler }) => {
-    const [response, setResponse] = useState("")
-    const [credential, setCredential] = useState(getCookie(name))
-
-    return {
+  const llmStates = InstalledLLMs.map(({ label, name, start, apiKey }) =>
+    useState<LLM>({
       name,
-      response,
-      setResponse,
-      setDelta: (d) => setResponse((r) => `${r}${d}`),
-      handler,
-      credential,
-      setCredential,
+      credential: apiKey || getCookie(name),
       label,
-    }
-  })
+      start,
+      response: "",
+      working: false,
+    }),
+  )
 
   const handleSend = async () => {
-    if (sending) {
-      for (const llm of llms) {
-        ;(async () => {
-          llm.breaker?.()
-        })()
+    if (sending > 0) {
+      for (const [llm, setLLM] of llmStates) {
+        llm.stop?.()
+        setLLM((s) => ({
+          ...s,
+          working: false,
+        }))
       }
-      setSending(false)
+      setSending(0)
     } else {
-      setSending(true)
-      for (const llm of llms) {
+      for (const [llm, setLLM] of llmStates) {
         ;(async () => {
-          llm.setResponse("")
-          llm.breaker?.()
-          llm.breaker = await llm.handler(llm.credential, prompt, (delta) => {
-            llm.setDelta(delta)
+          setSending((c) => c + 1)
+          setLLM((s) => ({
+            ...s,
+            response: "",
+            working: true,
+          }))
+          const breaker = await llm.start(llm.credential, prompt, (delta, done) => {
+            if (done) {
+              setSending((c) => c - 1)
+              setLLM((s) => ({ ...s, working: false }))
+            } else {
+              setLLM((s) => ({ ...s, response: `${s.response}${delta}` }))
+            }
           })
+          setLLM((s) => ({
+            ...s,
+            stop: breaker,
+          }))
         })()
       }
     }
-  }
-
-  const handleCredentialChange = (llm: LLM, value: string) => {
-    llm.setCredential(value)
-    setCookie(llm.name, value)
   }
 
   const [showPassword, setShowPassword] = useState(false)
-
-  const handleClickShowPassword = () => setShowPassword((show) => !show)
-
-  const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault()
-  }
 
   return (
     <>
@@ -121,7 +104,7 @@ function App() {
                 event.preventDefault()
               }
             }}
-            disabled={sending}
+            disabled={sending > 0}
           />
           <Button
             variant="contained"
@@ -129,11 +112,11 @@ function App() {
               handleSend()
             }}
           >
-            {sending ? "Stop" : "Send"}
+            {sending > 0 ? "Stop" : "Send"}
           </Button>
         </Stack>
         <Stack direction="row" spacing={2}>
-          {llms.map((llm) => (
+          {llmStates.map(([llm, setLlm]) => (
             <Stack key={llm.name} spacing={1} width="100%">
               <Box>{llm.name}</Box>
               <TextField
@@ -144,8 +127,8 @@ function App() {
                     <InputAdornment position="end">
                       <IconButton
                         aria-label="toggle password visibility"
-                        onClick={handleClickShowPassword}
-                        onMouseDown={handleMouseDownPassword}
+                        onClick={() => setShowPassword((show) => !show)}
+                        onMouseDown={(e) => e.preventDefault()}
                         edge="end"
                       >
                         {showPassword ? <VisibilityOff /> : <Visibility />}
@@ -155,10 +138,14 @@ function App() {
                 }}
                 value={llm.credential}
                 onChange={(e) => {
-                  handleCredentialChange(llm, e.target.value)
+                  const credential = e.target.value
+                  setLlm((s) => ({ ...s, credential }))
+                  setCookie(llm.name, credential)
                 }}
               />
-              <Markdown>{llm.response}</Markdown>
+              <Markdown>{`${llm.response}${
+                llm.working ? "[working...]" : "[completed]"
+              }`}</Markdown>
             </Stack>
           ))}
         </Stack>

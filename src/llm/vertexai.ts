@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai"
-import { llmHandler } from "./llm"
+import { llmStarter } from "./llm"
 
-export const gemini1: llmHandler = async (apiKey, input, on) => {
+export const gemini1: llmStarter = async (apiKey, input, on) => {
   const genAI = new GoogleGenerativeAI(apiKey)
 
   const model = "gemini-1.0-pro-001"
@@ -15,8 +15,9 @@ export const gemini1: llmHandler = async (apiKey, input, on) => {
   ;(async () => {
     for await (const item of result1.stream) {
       const answer = item.candidates?.[0].content.parts[0].text || ""
-      on(answer, "")
+      on(answer, false)
     }
+    on("", true)
   })()
 
   return () => {

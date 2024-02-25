@@ -1,7 +1,7 @@
 import OpenAI from "openai"
-import { llmHandler } from "./llm"
+import { llmStarter } from "./llm"
 
-export const gpt4turbo: llmHandler = async (apiKey, prompt, on) => {
+export const gpt4turbo: llmStarter = async (apiKey, prompt, on) => {
   const openai = new OpenAI({
     apiKey: apiKey,
     dangerouslyAllowBrowser: true,
@@ -13,7 +13,9 @@ export const gpt4turbo: llmHandler = async (apiKey, prompt, on) => {
       messages: [{ role: "user", content: prompt }],
       stream: true,
     })
-    .on("content", on)
+    .on("content", (delta) => on(delta, false))
+    .on("end", () => on("", true))
+    .on("error", (error) => on(`Error: ${error}`, true))
 
   return () => {
     stream.controller.abort()

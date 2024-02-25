@@ -4,10 +4,10 @@ import {
   InvokeModelWithResponseStreamCommandInput,
 } from "@aws-sdk/client-bedrock-runtime"
 
-import { llmHandler } from "./llm"
+import { llmStarter } from "./llm"
 
 // apiKey format: AWS_REGION:AWS_ACCESS_KEY_ID:AWS_SECRET_ACCESS_KEY
-export const claude21: llmHandler = async (apiKey, input, on) => {
+export const claude21: llmStarter = async (apiKey, input, on) => {
   const keys = apiKey.split(":")
 
   const client = new BedrockRuntimeClient({
@@ -32,18 +32,24 @@ export const claude21: llmHandler = async (apiKey, input, on) => {
       top_p: 1,
     }),
   }
+  const decoder = new TextDecoder("utf-8")
+  const command = new InvokeModelWithResponseStreamCommand(params)
+  const res = await client.send(command)
+  let cancelled = false
   ;(async () => {
-    const command = new InvokeModelWithResponseStreamCommand(params)
-    const res = await client.send(command)
-
-    const decoder = new TextDecoder("utf-8")
     for await (const event of res.body || []) {
+      if (cancelled) {
+        break
+      }
       if (event.chunk?.bytes) {
         const chunk = JSON.parse(decoder.decode(event.chunk.bytes))
-        on(chunk.completion, "") // change this line
+        on(chunk.completion, false) // change this line
       }
     }
+    on("", true)
   })()
 
-  return () => {}
+  return () => {
+    cancelled = true
+  }
 }

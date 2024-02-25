@@ -21,10 +21,16 @@ This app lets you see responses from multiple LLMs at once.
 
 To set up the development environment:
 
+- Add your API keys to the `.env` file because the local server uses HTTP, which doesn't support 'secure' cookies, whereas this app relies on 'secure' cookies.
+
 ```
+cp .env.sample .env
+
+# Set your API keys in .env
+
 npm install
 
 npm run dev
 
-# Then, open your browser and go to http://localhost:5173
+# Open your browser and go to http://localhost:5173
 ```
