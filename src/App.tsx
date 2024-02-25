@@ -90,6 +90,10 @@ function App() {
         <Stack direction="row" spacing={2}>
           <Box>LLM Deck</Box>
           <Link href="https://github.com/reki2000/llm-deck">GitHub</Link>
+          <Box>
+            Your API Keys will be stored ONLY in your browser's localStorage and will NEVER be sent
+            to the host. However, avoid using untrusted hosts.
+          </Box>
         </Stack>
         <Stack direction="row" alignItems="center" spacing={1}>
           <TextField
