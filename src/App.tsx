@@ -28,6 +28,10 @@ type LLM = {
 
   start: llmStarter
   stop?: llmStreahBreaker
+
+  options: {
+    temperature?: number
+  }
 }
 
 function App() {
@@ -42,6 +46,7 @@ function App() {
       start,
       response: "",
       working: false,
+      options: {},
     }),
   )
 
@@ -64,14 +69,19 @@ function App() {
             response: "",
             working: true,
           }))
-          const breaker = await llm.start(llm.credential, prompt, (delta, done) => {
-            if (done) {
-              setSending((c) => c - 1)
-              setLLM((s) => ({ ...s, working: false }))
-            } else {
-              setLLM((s) => ({ ...s, response: `${s.response}${delta}` }))
-            }
-          })
+          const breaker = await llm.start(
+            llm.credential,
+            prompt,
+            (delta, done) => {
+              if (done) {
+                setSending((c) => c - 1)
+                setLLM((s) => ({ ...s, working: false }))
+              } else {
+                setLLM((s) => ({ ...s, response: `${s.response}${delta}` }))
+              }
+            },
+            llm.options,
+          )
           setLLM((s) => ({
             ...s,
             stop: breaker,

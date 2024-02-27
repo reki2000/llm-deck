@@ -6,6 +6,7 @@ export type llmStarter = (
   credential: string,
   prompt: string,
   handleDelta: llmStream,
+  opts: llmOptions,
 ) => Promise<llmStreahBreaker>
 
 export type llmStream = (delta: string, done: boolean) => void
@@ -32,3 +33,7 @@ export const InstalledLLMs = [
     apiKey: import.meta.env.VITE_AWS_CREDENTIALS,
   },
 ]
+
+export type llmOptions = {
+  temperature?: number
+}

@@ -7,7 +7,7 @@ import {
 import { llmStarter } from "./llm"
 
 // apiKey format: AWS_REGION:AWS_ACCESS_KEY_ID:AWS_SECRET_ACCESS_KEY
-export const claude21: llmStarter = async (apiKey, input, on) => {
+export const claude21: llmStarter = async (apiKey, input, on, opts = {}) => {
   const keys = apiKey.split(":")
 
   const client = new BedrockRuntimeClient({
@@ -26,10 +26,11 @@ export const claude21: llmStarter = async (apiKey, input, on) => {
     accept: "application/json",
     body: JSON.stringify({
       prompt: `Human:${input} Assistant:`,
-      max_tokens_to_sample: 300,
-      temperature: 0.5,
+      max_tokens_to_sample: 10000,
+      temperature: 0.8,
       top_k: 250,
       top_p: 1,
+      ...opts,
     }),
   }
   const decoder = new TextDecoder("utf-8")
@@ -43,6 +44,7 @@ export const claude21: llmStarter = async (apiKey, input, on) => {
       }
       if (event.chunk?.bytes) {
         const chunk = JSON.parse(decoder.decode(event.chunk.bytes))
+        console.log("bedrock:", chunk)
         on(chunk.completion, false) // change this line
       }
     }
