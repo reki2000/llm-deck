@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai"
 import { llmStarter } from "./llm"
 
-export const gemini1: llmStarter = async (apiKey, input, on, opts = {}) => {
+export const gemini1: llmStarter = async (apiKey, input, on, _) => {
   const genAI = new GoogleGenerativeAI(apiKey)
 
   const model = "gemini-1.0-pro-001"
