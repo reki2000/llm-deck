@@ -44,7 +44,6 @@ export const claude21: llmStarter = async (apiKey, input, on, opts = {}) => {
       }
       if (event.chunk?.bytes) {
         const chunk = JSON.parse(decoder.decode(event.chunk.bytes))
-        console.log("bedrock:", chunk)
         on(chunk.completion, false) // change this line
       }
     }
