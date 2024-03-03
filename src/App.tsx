@@ -119,8 +119,9 @@ const LLMPanel = ({
           >
             Credential
           </Button>
+          markdown:
           <Switch
-            value={markdown}
+            defaultChecked
             onChange={() => {
               setMarkdown((v) => !v)
             }}
