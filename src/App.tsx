@@ -70,8 +70,8 @@ const LLMPanel = ({
   const [showCredential, setShowCredential] = useState(false)
 
   const instructions = [
-    "answer in the language used in the prompt.",
-    "your answer must be formatted in markdown, with tex part should be quoted with $, $$.",
+    "your answer must be formatted in markdown",
+    "if your answer includes latex part, it should be quoted with $ or $$.",
   ]
 
   const [markdown, setMarkdown] = useState(true)
