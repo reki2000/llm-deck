@@ -2,96 +2,178 @@ import {
   Box,
   Button,
   CssBaseline,
-  IconButton,
-  InputAdornment,
   Link,
+  MenuItem,
+  Select,
   Stack,
+  Switch,
   TextField,
 } from "@mui/material"
 
-import Visibility from "@mui/icons-material/Visibility"
-import VisibilityOff from "@mui/icons-material/VisibilityOff"
+import { useEffect, useRef, useState } from "react"
+import { InstalledLLMs, llmProvider, llmStreahBreaker as llmStreamBreaker } from "./llm/llm"
 
-import { useState } from "react"
-import { InstalledLLMs, llmStarter, llmStreahBreaker } from "./llm/llm"
-
-import Markdown from "react-markdown"
+import { CredentialField } from "./CredentialField"
+import Markdown from "./TexMarkdown"
+import { loadConfiguration, saveConfiguration } from "./configurations"
 import { loadCredential, saveCredential } from "./credential"
 
-type LLM = {
-  name: string
-  credential: string
-  label: string
+const useResponse = ({
+  sessionId,
+  starter,
+  onEnd,
+}: {
+  sessionId: string
+  starter: (onDelta: (delta: string, done: boolean) => void) => void
+  onEnd: () => void
+}) => {
+  const [response, setResponse] = useState("")
+  const [working, setWorking] = useState(false)
 
-  response: string
-  working: boolean
+  const currentSessionId = useRef("")
 
-  start: llmStarter
-  stop?: llmStreahBreaker
+  useEffect(() => {
+    if (sessionId === "" && currentSessionId.current !== "") {
+      onEnd()
+      currentSessionId.current = ""
+      setWorking(false)
+      return
+    }
 
-  options: {
-    temperature?: number
+    if (currentSessionId.current !== sessionId) {
+      currentSessionId.current = sessionId
+      setResponse("")
+      setWorking(true)
+      starter((delta, done) => {
+        setResponse((s) => `${s}${delta}`)
+        if (done) {
+          onEnd()
+          setWorking(false)
+          return
+        }
+      })
+    }
+  }, [sessionId, starter, onEnd])
+
+  return `${response}${working ? " [working...]" : " [completed]"}`
+}
+
+// LLMPanel is a component that displays the UI of the configurations for a single LLM provider.
+// 'sessionID' prop is used to start the LLM provider with the givin prompt and configurations.
+const LLMPanel = ({
+  sessionId,
+  prompt,
+  llm,
+  onEnd,
+}: { sessionId: string; prompt: string; llm: llmProvider; onEnd: () => void }) => {
+  const [credential, setCredential] = useState(() => llm.apiKey || loadCredential(llm.name))
+  const [showCredential, setShowCredential] = useState(false)
+
+  const instructions = [
+    "answer in the language used in the prompt.",
+    "your answer must be formatted in markdown, with tex part should be quoted with $, $$.",
+  ]
+
+  const [markdown, setMarkdown] = useState(true)
+
+  const [model, setModel] = useState(() => loadConfiguration(llm.name, "model"))
+  const [models, setModels] = useState<string[]>([model])
+
+  useEffect(() => {
+    const fetchModels = async () => {
+      const availableModels = await llm.models(credential)
+      availableModels.sort()
+      setModels(availableModels)
+      setModel(availableModels.includes(model) ? model : "")
+    }
+
+    fetchModels()
+  }, [credential, llm, model])
+
+  const breaker = useRef<llmStreamBreaker | null>(null)
+
+  if (sessionId === "" && breaker.current) {
+    breaker.current()
+    breaker.current = null
   }
+
+  const response = useResponse({
+    sessionId,
+    starter: (onDelta) => {
+      ;(async () => {
+        breaker.current = await llm.start(credential, instructions, prompt, onDelta, { model })
+      })()
+    },
+    onEnd,
+  })
+
+  return (
+    <>
+      <Stack spacing={1} width="100%">
+        <Stack direction="row" display="flex" alignItems="center">
+          <Box>{llm.name}</Box>
+          <Button
+            onClick={() => {
+              setShowCredential((v) => !v)
+            }}
+          >
+            Credential
+          </Button>
+          <Switch
+            value={markdown}
+            onChange={() => {
+              setMarkdown((v) => !v)
+            }}
+          />
+        </Stack>
+        <CredentialField
+          value={credential}
+          label={llm.apiKeyLabel}
+          sx={{ display: showCredential ? "block" : "none" }}
+          onChange={(e) => {
+            const s = e.target.value || ""
+            setCredential(s)
+            saveCredential(llm.name, s)
+          }}
+        />
+        <Stack direction="row">
+          <Select
+            value={model}
+            onChange={(e) => {
+              const value = e.target.value || ""
+              saveConfiguration(llm.name, "model", value)
+              setModel(value)
+            }}
+          >
+            {models.map((model) => (
+              <MenuItem key={model} value={model}>
+                {model}
+              </MenuItem>
+            ))}
+          </Select>
+          {/* <Button onClick={fetchModels}>Reload</Button> */}
+        </Stack>
+
+        {markdown ? <Markdown>{response}</Markdown> : response}
+      </Stack>
+    </>
+  )
 }
 
 function App() {
   const [prompt, setPrompt] = useState("")
   const [sending, setSending] = useState(0)
-
-  const llmStates = InstalledLLMs.map(({ label, name, start, apiKey }) =>
-    useState<LLM>({
-      name,
-      credential: apiKey || loadCredential(name),
-      label,
-      start,
-      response: "",
-      working: false,
-      options: {},
-    }),
-  )
+  const [sessionId, setSessionId] = useState("")
 
   const handleSend = async () => {
     if (sending > 0) {
-      for (const [llm, setLLM] of llmStates) {
-        llm.stop?.()
-        setLLM((s) => ({
-          ...s,
-          working: false,
-        }))
-      }
+      setSessionId("")
       setSending(0)
     } else {
-      for (const [llm, setLLM] of llmStates) {
-        ;(async () => {
-          setSending((c) => c + 1)
-          setLLM((s) => ({
-            ...s,
-            response: "",
-            working: true,
-          }))
-          const breaker = await llm.start(
-            llm.credential,
-            prompt,
-            (delta, done) => {
-              if (done) {
-                setSending((c) => c - 1)
-                setLLM((s) => ({ ...s, working: false }))
-              } else {
-                setLLM((s) => ({ ...s, response: `${s.response}${delta}` }))
-              }
-            },
-            llm.options,
-          )
-          setLLM((s) => ({
-            ...s,
-            stop: breaker,
-          }))
-        })()
-      }
+      setSessionId(`${Math.random()}`)
+      setSending(3)
     }
   }
-
-  const [showPassword, setShowPassword] = useState(false)
 
   return (
     <>
@@ -109,6 +191,7 @@ function App() {
           <TextField
             fullWidth
             multiline
+            autoFocus
             label="prompt; SHIFT+ENTER to Send"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
@@ -126,41 +209,18 @@ function App() {
               handleSend()
             }}
           >
-            {sending > 0 ? "Stop" : "Send"}
+            {sending > 0 ? `Stop ${sending}` : "Send"}
           </Button>
         </Stack>
         <Stack direction="row" spacing={2}>
-          {llmStates.map(([llm, setLlm]) => (
-            <Stack key={llm.name} spacing={1} width="100%">
-              <Box>{llm.name}</Box>
-              <TextField
-                label={llm.label}
-                type={showPassword ? "text" : "password"}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        aria-label="toggle password visibility"
-                        onClick={() => setShowPassword((show) => !show)}
-                        onMouseDown={(e) => e.preventDefault()}
-                        edge="end"
-                      >
-                        {showPassword ? <VisibilityOff /> : <Visibility />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-                value={llm.credential}
-                onChange={(e) => {
-                  const credential = e.target.value
-                  setLlm((s) => ({ ...s, credential }))
-                  saveCredential(llm.name, credential)
-                }}
-              />
-              <Markdown>{`${llm.response}${
-                llm.working ? "[working...]" : "[completed]"
-              }`}</Markdown>
-            </Stack>
+          {[1, 2, 3].map((i, index) => (
+            <LLMPanel
+              key={`${InstalledLLMs[i].name}-${index}`}
+              llm={InstalledLLMs[i]}
+              sessionId={sessionId}
+              prompt={prompt}
+              onEnd={() => setSending((c) => (c > 0 ? c - 1 : 0))}
+            />
           ))}
         </Stack>
       </Stack>

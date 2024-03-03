@@ -1,26 +1,50 @@
 import { GoogleGenerativeAI } from "@google/generative-ai"
-import { llmStarter } from "./llm"
+import { llmProvider, llmReloader, llmStarter } from "./llm"
 
-export const gemini1: llmStarter = async (apiKey, input, on, _) => {
+const listModels: llmReloader = async (_: string) => {
+  // TODO: Implement this
+  return ["gemini-1.0-pro-001"]
+}
+
+const gemini1: llmStarter = async (apiKey, instructions, input, on, opts) => {
   const genAI = new GoogleGenerativeAI(apiKey)
 
-  const model = "gemini-1.0-pro-001"
   const generativeModel = genAI.getGenerativeModel({
-    model: model,
+    model: opts.model,
   })
 
   const chat = generativeModel.startChat({})
   const chatInput1 = input
-  const result1 = await chat.sendMessageStream(chatInput1)
+  let cancelled = false
   ;(async () => {
-    for await (const item of result1.stream) {
-      const answer = item.candidates?.[0].content.parts[0].text || ""
-      on(answer, false)
+    try {
+      const result1 = await chat.sendMessageStream(instructions + chatInput1)
+      for await (const item of result1.stream) {
+        if (cancelled) {
+          break
+        }
+        const answer = item.candidates?.[0].content.parts[0].text || ""
+        on(answer, false)
+      }
+      on("", true)
+    } catch (e) {
+      if (e instanceof Error) {
+        on(e.message, true)
+      } else {
+        throw e
+      }
     }
-    on("", true)
   })()
 
   return () => {
-    result1.stream.return("")
+    cancelled = true
   }
+}
+
+export const vertexAIProvider: llmProvider = {
+  name: "Vertex AI",
+  start: gemini1,
+  apiKeyLabel: "ACCESS_KEY",
+  apiKey: import.meta.env.VITE_GCP_ACCESS_KEY,
+  models: listModels,
 }

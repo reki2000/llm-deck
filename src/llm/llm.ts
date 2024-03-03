@@ -1,39 +1,58 @@
-import { claude21 } from "./bedrock"
-import { gpt4turbo } from "./openai"
-import { gemini1 } from "./vertexai"
+import { bedrockProvider } from "./bedrock"
+import { openAIProvider } from "./openai"
+import { vertexAIProvider } from "./vertexai"
 
 export type llmStarter = (
   credential: string,
+  instruction: string[],
   prompt: string,
-  handleDelta: llmStream,
+  handleDelta: llmStreamHandler,
   opts: llmOptions,
 ) => Promise<llmStreahBreaker>
 
-export type llmStream = (delta: string, done: boolean) => void
+export type llmReloader = (key: string) => Promise<string[]>
+
+export type llmStreamHandler = (delta: string, done: boolean) => void
 
 export type llmStreahBreaker = () => void
 
-export const InstalledLLMs = [
-  {
-    name: "gpt4-turbo",
-    start: gpt4turbo,
-    label: "OPENAI_API_KEY",
-    apiKey: import.meta.env.VITE_OPENAI_API_KEY,
-  },
-  {
-    name: "gemini 1.0 pro",
-    start: gemini1,
-    label: "ACCESS_KEY",
-    apiKey: import.meta.env.VITE_GCP_ACCESS_KEY,
-  },
-  {
-    name: "claude 2.1",
-    start: claude21,
-    label: "AWS_REGION:AWS_ACCESS_KEY_ID:AWS_SECRET_ACCESS_KEY",
-    apiKey: import.meta.env.VITE_AWS_CREDENTIALS,
-  },
-]
-
 export type llmOptions = {
+  model: string
   temperature?: number
 }
+
+export type llmProvider = {
+  name: string
+  apiKeyLabel: string
+  apiKey: string
+  models: (s: string) => Promise<string[]>
+  start: llmStarter
+}
+
+const dummyProvider: llmProvider = {
+  name: "dummy",
+  apiKeyLabel: "API_KEY",
+  apiKey: "",
+  models: async () => ["dummy-model"],
+  start: async (_, __, prompt, handle) => {
+    handle(prompt, false)
+    let alive = true
+    ;(async () => {
+      while (Math.random() < 0.95 && alive) {
+        await new Promise((resolve) => setTimeout(resolve, 100))
+        handle("dummy ", false)
+      }
+      handle("completed.", true)
+    })()
+    return () => {
+      alive = false
+    }
+  },
+}
+
+export const InstalledLLMs: llmProvider[] = [
+  dummyProvider,
+  openAIProvider,
+  vertexAIProvider,
+  bedrockProvider,
+]
