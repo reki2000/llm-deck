@@ -1,4 +1,4 @@
-import { Box, MenuItem, Select, Stack, Switch, Typography } from "@mui/material"
+import { MenuItem, Select, Stack, Switch } from "@mui/material"
 
 import { useEffect, useRef, useState } from "react"
 import { llmProvider, llmStreahBreaker as llmStreamBreaker } from "./llm/llm"
