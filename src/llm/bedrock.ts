@@ -43,17 +43,36 @@ const claude21: llmStarter = async (apiKey, instructions, input, on, opts) => {
     },
   })
 
+  const payload = opts.model.includes("claude-3")
+    ? {
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: `Following is instruction: ${instructions.join(" ")}`,
+              },
+              { type: "text", text: `User's question is here: ${input}` },
+            ],
+          },
+        ],
+        anthropic_version: "bedrock-2023-05-31",
+        max_tokens: 10000,
+      }
+    : {
+        prompt: `Human:${instructions.join(" ")} ${input} Assistant:`,
+        max_tokens_to_sample: 10000,
+        temperature: 0.8,
+        top_k: 250,
+        top_p: 1,
+      }
+
   const params: InvokeModelWithResponseStreamCommandInput = {
     modelId: opts.model,
     contentType: "application/json",
     accept: "application/json",
-    body: JSON.stringify({
-      prompt: `Human:${instructions.join(" ")} ${input} Assistant:`,
-      max_tokens_to_sample: 10000,
-      temperature: 0.8,
-      top_k: 250,
-      top_p: 1,
-    }),
+    body: JSON.stringify(payload),
   }
   const decoder = new TextDecoder("utf-8")
   const command = new InvokeModelWithResponseStreamCommand(params)
@@ -67,7 +86,8 @@ const claude21: llmStarter = async (apiKey, instructions, input, on, opts) => {
         }
         if (event.chunk?.bytes) {
           const chunk = JSON.parse(decoder.decode(event.chunk.bytes))
-          on(chunk.completion, false) // change this line
+          console.log(chunk)
+          on(chunk?.delta?.text || chunk.completion || "", false) // change this line
         }
       }
       on("", true)
