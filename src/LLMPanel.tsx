@@ -1,6 +1,6 @@
 import { MenuItem, Select, Stack, Switch } from "@mui/material"
 
-import { useEffect, useRef, useState } from "react"
+import { Fragment, useEffect, useRef, useState } from "react"
 import { llmProvider, llmStreahBreaker as llmStreamBreaker } from "./llm/llm"
 
 import Markdown from "./TexMarkdown"
@@ -125,7 +125,16 @@ export const LLMPanel = ({
           />
           markdown/tex
         </Stack>
-        {markdown ? <Markdown>{response}</Markdown> : response}
+        {markdown ? (
+          <Markdown>{response}</Markdown>
+        ) : (
+          response.split("\n").map((item, i, arr) => (
+            <Fragment key={item}>
+              {item}
+              {i < arr.length - 1 && <br />}
+            </Fragment>
+          ))
+        )}
       </Stack>
     </>
   )
