@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai"
-import { llmProvider, llmReloader, llmStarter } from "./llm"
+import { llmGenerate, llmListModels, llmProvider } from "./llm"
 
-const listModels: llmReloader = async (apiKey: string) => {
+const listModels: llmListModels = async (apiKey: string) => {
   const api = "https://generativelanguage.googleapis.com/v1/models"
   const req = { headers: { "content-type": "application/json", "x-goog-api-key": apiKey } }
   const models = await fetch(api, req).then((res) => res.json())
@@ -14,7 +14,7 @@ const listModels: llmReloader = async (apiKey: string) => {
   return list
 }
 
-const gemini1: llmStarter = async (apiKey, instructions, input, on, opts) => {
+const generate: llmGenerate = async (apiKey, instructions, input, on, opts) => {
   const genAI = new GoogleGenerativeAI(apiKey)
 
   const generativeModel = genAI.getGenerativeModel({
@@ -51,7 +51,7 @@ const gemini1: llmStarter = async (apiKey, instructions, input, on, opts) => {
 
 export const vertexAIProvider: llmProvider = {
   name: "Vertex AI",
-  start: gemini1,
+  start: generate,
   apiKeyLabel: "ACCESS_KEY",
   apiKey: import.meta.env.VITE_GCP_ACCESS_KEY,
   models: listModels,

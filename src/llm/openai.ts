@@ -1,7 +1,7 @@
 import OpenAI from "openai"
-import { llmProvider, llmReloader, llmStarter } from "./llm"
+import { llmGenerate, llmListModels, llmProvider } from "./llm"
 
-const listModels: llmReloader = async (apiKey: string) => {
+const listModels: llmListModels = async (apiKey: string) => {
   const openai = new OpenAI({
     apiKey: apiKey,
     dangerouslyAllowBrowser: true,
@@ -10,7 +10,7 @@ const listModels: llmReloader = async (apiKey: string) => {
   return models.data.map((m) => m.id).filter((n) => n.startsWith("gpt-"))
 }
 
-const starter: llmStarter = async (apiKey, instructions, prompt, on, opts) => {
+const generate: llmGenerate = async (apiKey, instructions, prompt, on, opts) => {
   const openai = new OpenAI({
     apiKey: apiKey,
     dangerouslyAllowBrowser: true,
@@ -36,7 +36,7 @@ const starter: llmStarter = async (apiKey, instructions, prompt, on, opts) => {
 
 export const openAIProvider: llmProvider = {
   name: "OpenAI",
-  start: starter,
+  start: generate,
   apiKeyLabel: "OPENAI_API_KEY",
   apiKey: import.meta.env.VITE_OPENAI_API_KEY,
   models: listModels,

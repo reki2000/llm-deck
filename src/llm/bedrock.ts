@@ -5,9 +5,9 @@ import {
   InvokeModelWithResponseStreamCommandInput,
 } from "@aws-sdk/client-bedrock-runtime"
 
-import { llmReloader, llmStarter } from "./llm"
+import { llmGenerate, llmListModels } from "./llm"
 
-const listModels: llmReloader = async (apiKey: string) => {
+const listModels: llmListModels = async (apiKey: string) => {
   const keys = apiKey.split(":")
   const client = new BedrockClient({
     region: keys[0],
@@ -32,7 +32,7 @@ const listModels: llmReloader = async (apiKey: string) => {
 }
 
 // apiKey format: AWS_REGION:AWS_ACCESS_KEY_ID:AWS_SECRET_ACCESS_KEY
-const claude21: llmStarter = async (apiKey, instructions, input, on, opts) => {
+const generate: llmGenerate = async (apiKey, instructions, input, on, opts) => {
   const keys = apiKey.split(":")
 
   const client = new BedrockRuntimeClient({
@@ -106,7 +106,7 @@ const claude21: llmStarter = async (apiKey, instructions, input, on, opts) => {
 
 export const bedrockProvider = {
   name: "Bedrock",
-  start: claude21,
+  start: generate,
   apiKeyLabel: "AWS_REGION:AWS_ACCESS_KEY_ID:AWS_SECRET_ACCESS_KEY",
   apiKey: import.meta.env.VITE_AWS_CREDENTIALS,
   models: listModels,

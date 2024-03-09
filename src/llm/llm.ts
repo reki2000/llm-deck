@@ -2,7 +2,7 @@ import { bedrockProvider } from "./bedrock"
 import { openAIProvider } from "./openai"
 import { vertexAIProvider } from "./vertexai"
 
-export type llmStarter = (
+export type llmGenerate = (
   credential: string,
   instruction: string[],
   prompt: string,
@@ -10,7 +10,7 @@ export type llmStarter = (
   opts: llmOptions,
 ) => Promise<llmStreahBreaker>
 
-export type llmReloader = (key: string) => Promise<string[]>
+export type llmListModels = (key: string) => Promise<string[]>
 
 export type llmStreamHandler = (delta: string, done: boolean) => void
 
@@ -26,7 +26,7 @@ export type llmProvider = {
   apiKeyLabel: string
   apiKey: string
   models: (s: string) => Promise<string[]>
-  start: llmStarter
+  start: llmGenerate
 }
 
 const dummyProvider: llmProvider = {
