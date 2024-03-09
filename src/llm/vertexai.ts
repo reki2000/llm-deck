@@ -1,9 +1,17 @@
 import { GoogleGenerativeAI } from "@google/generative-ai"
 import { llmProvider, llmReloader, llmStarter } from "./llm"
 
-const listModels: llmReloader = async (_: string) => {
-  // TODO: Implement this
-  return ["gemini-1.0-pro-001"]
+const listModels: llmReloader = async (apiKey: string) => {
+  const api = "https://generativelanguage.googleapis.com/v1/models"
+  const req = { headers: { "content-type": "application/json", "x-goog-api-key": apiKey } }
+  const models = await fetch(api, req).then((res) => res.json())
+
+  const list = models.models
+    .filter((m: { supportedGenerationMethods: string[] }) =>
+      m.supportedGenerationMethods.includes("generateContent"),
+    )
+    .map((m: { name: string }) => m.name.replace("models/", ""))
+  return list
 }
 
 const gemini1: llmStarter = async (apiKey, instructions, input, on, opts) => {
