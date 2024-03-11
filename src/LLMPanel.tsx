@@ -1,4 +1,4 @@
-import { MenuItem, Select, Stack, Switch } from "@mui/material"
+import { MenuItem, Stack, Switch, TextField } from "@mui/material"
 
 import { Fragment, useEffect, useRef, useState } from "react"
 import { llmProvider, llmStreahBreaker as llmStreamBreaker } from "./llm/llm"
@@ -51,16 +51,18 @@ const useResponse = ({
 // 'sessionID' prop is used to start the LLM provider with the givin prompt and configurations.
 export const LLMPanel = ({
   sessionId,
+  instruction,
   prompt,
   llm,
   onEnd,
-}: { sessionId: string; prompt: string; llm: llmProvider; onEnd: () => void }) => {
+}: {
+  sessionId: string
+  instruction: string
+  prompt: string
+  llm: llmProvider
+  onEnd: () => void
+}) => {
   const credential = llm.apiKey || loadCredential(llm.name)
-
-  const instructions = [
-    "Format your answer in Markdown.",
-    "Only when your answer includes formula, quote them with $ or $$.",
-  ]
 
   const [markdown, setMarkdown] = useState(true)
 
@@ -89,7 +91,7 @@ export const LLMPanel = ({
     sessionId,
     starter: (onDelta) => {
       ;(async () => {
-        breaker.current = await llm.start(credential, instructions, prompt, onDelta, { model })
+        breaker.current = await llm.start(credential, instruction, prompt, onDelta, { model })
       })()
     },
     onEnd,
@@ -99,7 +101,9 @@ export const LLMPanel = ({
     <>
       <Stack spacing={1} width="100%">
         <Stack spacing={2} direction="row" display="flex" alignItems="center">
-          <Select
+          <TextField
+            select
+            label={`${llm.name} model`}
             value={model}
             onChange={(e) => {
               const value = e.target.value || ""
@@ -112,7 +116,7 @@ export const LLMPanel = ({
                 {model}
               </MenuItem>
             ))}
-          </Select>
+          </TextField>
           {/* <Button onClick={fetchModels}>Reload</Button> */}
         </Stack>
         <Stack direction="row" display="flex" alignItems="center">

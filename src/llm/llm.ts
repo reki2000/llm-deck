@@ -4,7 +4,7 @@ import { vertexAIProvider } from "./vertexai"
 
 export type llmGenerate = (
   credential: string,
-  instruction: string[],
+  instruction: string,
   prompt: string,
   handleDelta: llmStreamHandler,
   opts: llmOptions,

@@ -32,7 +32,7 @@ const listModels: llmListModels = async (apiKey: string) => {
 }
 
 // apiKey format: AWS_REGION:AWS_ACCESS_KEY_ID:AWS_SECRET_ACCESS_KEY
-const generate: llmGenerate = async (apiKey, instructions, input, on, opts) => {
+const generate: llmGenerate = async (apiKey, instruction, input, on, opts) => {
   const keys = apiKey.split(":")
 
   const client = new BedrockRuntimeClient({
@@ -51,7 +51,7 @@ const generate: llmGenerate = async (apiKey, instructions, input, on, opts) => {
             content: [
               {
                 type: "text",
-                text: `Following is instruction: ${instructions.join(" ")}`,
+                text: `Following is instruction: ${instruction}`,
               },
               { type: "text", text: `User's question is here: ${input}` },
             ],
@@ -61,7 +61,7 @@ const generate: llmGenerate = async (apiKey, instructions, input, on, opts) => {
         max_tokens: 10000,
       }
     : {
-        prompt: `Human:${instructions.join(" ")} ${input} Assistant:`,
+        prompt: `Human:${instruction} ${input} Assistant:`,
         max_tokens_to_sample: 10000,
         temperature: 0.8,
         top_k: 250,

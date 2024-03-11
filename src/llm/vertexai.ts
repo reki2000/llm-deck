@@ -14,7 +14,7 @@ const listModels: llmListModels = async (apiKey: string) => {
   return list
 }
 
-const generate: llmGenerate = async (apiKey, instructions, input, on, opts) => {
+const generate: llmGenerate = async (apiKey, instruction, input, on, opts) => {
   const genAI = new GoogleGenerativeAI(apiKey)
 
   const generativeModel = genAI.getGenerativeModel({
@@ -26,7 +26,7 @@ const generate: llmGenerate = async (apiKey, instructions, input, on, opts) => {
   let cancelled = false
   ;(async () => {
     try {
-      const result1 = await chat.sendMessageStream(instructions + chatInput1)
+      const result1 = await chat.sendMessageStream(`${instruction} #### ${chatInput1}`)
       for await (const item of result1.stream) {
         if (cancelled) {
           break

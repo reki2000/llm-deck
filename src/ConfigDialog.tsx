@@ -49,7 +49,7 @@ export const ConfigDialog = ({
       <DialogTitle>LLM Provider Configurations</DialogTitle>
       <DialogContent>
         <Stack spacing={4} p={2}>
-          {llmProviders.map((llm) => {
+          {llmProviders.slice(1).map((llm) => {
             const [credential, setCredential] = useState(
               () => llm.apiKey || loadCredential(llm.name),
             )

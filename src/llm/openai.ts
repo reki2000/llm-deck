@@ -10,7 +10,7 @@ const listModels: llmListModels = async (apiKey: string) => {
   return models.data.map((m) => m.id).filter((n) => n.startsWith("gpt-"))
 }
 
-const generate: llmGenerate = async (apiKey, instructions, prompt, on, opts) => {
+const generate: llmGenerate = async (apiKey, instruction, prompt, on, opts) => {
   const openai = new OpenAI({
     apiKey: apiKey,
     dangerouslyAllowBrowser: true,
@@ -20,7 +20,7 @@ const generate: llmGenerate = async (apiKey, instructions, prompt, on, opts) => 
     .stream({
       model: opts.model,
       messages: [
-        { role: "system", content: instructions.join(" #### ") },
+        { role: "system", content: instruction },
         { role: "user", content: prompt },
       ],
       stream: true,

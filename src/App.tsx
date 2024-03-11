@@ -1,10 +1,13 @@
-import { Box, Button, CssBaseline, Link, Stack, TextField } from "@mui/material"
+import { Box, Button, CssBaseline, Link, MenuItem, Stack, TextField } from "@mui/material"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { InstalledLLMs } from "./llm/llm"
 
 import { ConfigDialog } from "./ConfigDialog"
 import { LLMPanel } from "./LLMPanel"
+import { loadConfiguration, saveConfiguration } from "./configurations"
+
+type Instructions = { [id: string]: string }
 
 function App() {
   const [configDialogOpen, setConfigDialogOpen] = useState(false)
@@ -21,6 +24,14 @@ function App() {
       setSending(3)
     }
   }
+
+  const [instructions, setInstructions] = useState<Instructions>(() => {
+    return JSON.parse(loadConfiguration("instructions", "") || "{}") as Instructions
+  })
+  const [selectedInstruction, setSelectedInstruction] = useState("")
+  useEffect(() => {
+    saveConfiguration("instructions", "", JSON.stringify(instructions))
+  }, [instructions])
 
   return (
     <>
@@ -44,6 +55,51 @@ function App() {
             the host. However, avoid using untrusted hosts.
           </Box>
         </Stack>
+
+        <Stack direction="row" alignItems="center" spacing={1}>
+          <TextField
+            select
+            label="instruction"
+            fullWidth
+            value={selectedInstruction}
+            onChange={(e) => setSelectedInstruction(e.target.value)}
+          >
+            {Object.entries(instructions).map(([id, text]) => (
+              <MenuItem key={id} value={id} selected={id === selectedInstruction}>
+                {text}
+              </MenuItem>
+            ))}
+          </TextField>
+          <Button
+            variant="contained"
+            color="warning"
+            onClick={() => {
+              setSelectedInstruction("")
+              setInstructions((s) => {
+                delete s[selectedInstruction]
+                return { ...s }
+              })
+            }}
+          >
+            Delete
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => {
+              const id = `${new Date().getTime()}`
+              setInstructions((s) => {
+                if (!Object.values(s).includes(prompt)) {
+                  s[id] = prompt
+                }
+                return { ...s }
+              })
+              setSelectedInstruction(id)
+            }}
+          >
+            Add
+          </Button>
+        </Stack>
+
         <Stack direction="row" alignItems="center" spacing={1}>
           <TextField
             fullWidth
@@ -75,6 +131,7 @@ function App() {
               key={`${InstalledLLMs[i].name}-${index}`}
               llm={InstalledLLMs[i]}
               sessionId={sessionId}
+              instruction={instructions[selectedInstruction]}
               prompt={prompt}
               onEnd={() => setSending((c) => (c > 0 ? c - 1 : 0))}
             />
