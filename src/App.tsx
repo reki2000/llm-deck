@@ -131,7 +131,7 @@ function App() {
               key={`${InstalledLLMs[i].name}-${index}`}
               llm={InstalledLLMs[i]}
               sessionId={sessionId}
-              instruction={instructions[selectedInstruction]}
+              instruction={instructions[selectedInstruction] || ""}
               prompt={prompt}
               onEnd={() => setSending((c) => (c > 0 ? c - 1 : 0))}
             />
