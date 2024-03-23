@@ -13,11 +13,13 @@
   "dependencies": {
     "@aws-sdk/client-bedrock": "^3.525.0",
     "@aws-sdk/client-bedrock-runtime": "^3.521.0",
+    "@aws-sdk/client-polly": "^3.540.0",
     "@emotion/react": "^11.11.3",
     "@emotion/styled": "^11.11.0",
     "@google/generative-ai": "^0.2.1",
     "@mui/icons-material": "^5.15.10",
     "@mui/material": "^5.15.10",
+    "aws-sdk": "^2.1584.0",
     "openai": "^4.28.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

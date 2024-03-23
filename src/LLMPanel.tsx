@@ -1,8 +1,13 @@
-import { MenuItem, Stack, Switch, TextField } from "@mui/material"
+import { Button, MenuItem, Stack, TextField } from "@mui/material"
 
 import { Fragment, useEffect, useRef, useState } from "react"
 import { llmProvider, llmStreahBreaker as llmStreamBreaker } from "./llm/llm"
 
+import PlayCircleOutlinedIcon from "@mui/icons-material/PlayCircleOutlined"
+import StopCircleOutlinedIcon from "@mui/icons-material/StopCircleOutlined"
+
+import AWS from "aws-sdk"
+import { ChattyKathy } from "./ChattyKathy"
 import Markdown from "./TexMarkdown"
 import { loadConfiguration, saveConfiguration } from "./configurations"
 import { loadCredential } from "./credential"
@@ -97,6 +102,29 @@ export const LLMPanel = ({
     onEnd,
   })
 
+  const [speaking, setSpeaking] = useState(false)
+
+  const [chatter] = useState(() => {
+    if (loadCredential("polly") === "") {
+      return null
+    }
+
+    const [region, key, secret] = loadCredential("polly").split(":")
+    const chatter = ChattyKathy({
+      awsCredentials: new AWS.Credentials(key, secret),
+      awsRegion: region,
+      pollyVoiceId: loadCredential("polly-voice"),
+      speedRate: 1.2,
+    })
+    return chatter
+  })
+
+  const handleSpeak = (text: string) =>
+    chatter?.Speak(text, () => {
+      setSpeaking(false)
+    })
+  const handleSpeakStop = () => chatter?.ShutUp()
+
   return (
     <>
       <Stack spacing={1} width="100%">
@@ -120,14 +148,23 @@ export const LLMPanel = ({
           {/* <Button onClick={fetchModels}>Reload</Button> */}
         </Stack>
         <Stack direction="row" display="flex" alignItems="center">
-          text
-          <Switch
-            defaultChecked
-            onChange={() => {
+          {chatter && (
+            <Button
+              onClick={() => {
+                setSpeaking((s) => !s)
+                speaking ? handleSpeakStop() : handleSpeak(response)
+              }}
+            >
+              {speaking ? <StopCircleOutlinedIcon /> : <PlayCircleOutlinedIcon />}
+            </Button>
+          )}
+          <Button
+            onClick={() => {
               setMarkdown((v) => !v)
             }}
-          />
-          markdown/tex
+          >
+            {markdown ? "Text" : "Markdown/Tex"}
+          </Button>
         </Stack>
         {markdown ? (
           <Markdown>{response}</Markdown>

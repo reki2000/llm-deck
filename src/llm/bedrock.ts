@@ -107,7 +107,7 @@ const generate: llmGenerate = async (apiKey, instruction, input, on, opts) => {
 export const bedrockProvider = {
   name: "Bedrock",
   start: generate,
-  apiKeyLabel: "AWS_REGION:AWS_ACCESS_KEY_ID:AWS_SECRET_ACCESS_KEY",
+  apiKeyLabel: "REGION:ACCESS_KEY_ID:SECRET_ACCESS_KEY",
   apiKey: import.meta.env.VITE_AWS_CREDENTIALS,
   models: listModels,
 }

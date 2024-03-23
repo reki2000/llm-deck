@@ -29,6 +29,7 @@ function App() {
     return JSON.parse(loadConfiguration("instructions", "") || "{}") as Instructions
   })
   const [selectedInstruction, setSelectedInstruction] = useState("")
+
   useEffect(() => {
     saveConfiguration("instructions", "", JSON.stringify(instructions))
   }, [instructions])

@@ -5,6 +5,8 @@ import {
   DialogContent,
   DialogProps,
   DialogTitle,
+  MenuItem,
+  Select,
   Stack,
   Typography,
 } from "@mui/material"
@@ -20,6 +22,7 @@ const CredentialField = (props: TextFieldProps) => {
 
   return (
     <TextField
+      sx={{ width: "400px" }}
       {...props}
       type={showPassword ? "text" : "password"}
       InputProps={{
@@ -44,6 +47,9 @@ export const ConfigDialog = ({
   onClose,
   ...props
 }: DialogProps & { llmProviders: llmProvider[] }) => {
+  const [pollyCredential, setPollyCredential] = useState(() => loadCredential("polly"))
+  const [voice, setVoice] = useState(() => loadCredential("polly-voice") || "Mizuki")
+
   return (
     <Dialog {...props}>
       <DialogTitle>LLM Provider Configurations</DialogTitle>
@@ -60,9 +66,6 @@ export const ConfigDialog = ({
                   {llm.name}
                 </Typography>
                 <CredentialField
-                  sx={{ width: "400px" }}
-                  key={llm.name}
-                  id={llm.name}
                   label={llm.apiKeyLabel}
                   defaultValue={credential}
                   size="medium"
@@ -75,6 +78,35 @@ export const ConfigDialog = ({
               </Stack>
             )
           })}
+          <Stack direction="row" spacing={4} display="flex" alignItems="center">
+            <Typography width="100px" variant="h6">
+              AWS Polly
+            </Typography>
+            <CredentialField
+              label="REGION:ACCESS_KEY_ID:SECRET_ACCESS_KEY"
+              defaultValue={pollyCredential}
+              size="medium"
+              onChange={(e) => {
+                const s = e.target.value || ""
+                setPollyCredential(s)
+                saveCredential("polly", s)
+              }}
+            />
+            <Select
+              value={voice}
+              label="Voice"
+              onChange={(e) => {
+                const s = e.target.value || "Mizuki"
+                setVoice(s)
+                saveCredential("polly-voice", s)
+              }}
+            >
+              <MenuItem value="Mizuki">Mizuki</MenuItem>
+              <MenuItem value="Kazumi">Kazumi</MenuItem>
+              <MenuItem value="Tomoko">Tomoko</MenuItem>
+              <MenuItem value="Takumi">Takumi</MenuItem>
+            </Select>
+          </Stack>
         </Stack>
       </DialogContent>
       <DialogActions>
