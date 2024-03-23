@@ -2,7 +2,7 @@
 
 This app lets you see responses from multiple LLMs at once.
 
-<img src="https://github.com/reki2000/llm-deck/assets/2533597/778af179-2cd4-496f-8b70-e8c6cfd2f846" width="600px">
+<img src="https://github.com/reki2000/llm-deck/assets/2533597/b7e4a642-3e6a-41c5-932d-30c59329ddf5" width="700px">
 
 [DEMO SITE](https://reki2000.github.io/llm-deck/)
 
