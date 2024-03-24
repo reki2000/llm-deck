@@ -3,14 +3,11 @@ import { Button, MenuItem, Stack, TextField } from "@mui/material"
 import { Fragment, useEffect, useRef, useState } from "react"
 import { llmProvider, llmStreahBreaker as llmStreamBreaker } from "./llm/llm"
 
-import PlayCircleOutlinedIcon from "@mui/icons-material/PlayCircleOutlined"
-import StopCircleOutlinedIcon from "@mui/icons-material/StopCircleOutlined"
-
-import AWS from "aws-sdk"
-import { ChattyKathy } from "./ChattyKathy"
-import Markdown from "./TexMarkdown"
+import TexMarkdown from "./TexMarkdown"
 import { loadConfiguration, saveConfiguration } from "./configurations"
 import { loadCredential } from "./credential"
+
+import { SpeechButton } from "./speech/SpeechButton"
 
 const useResponse = ({
   sessionId,
@@ -52,8 +49,65 @@ const useResponse = ({
   return `${response}${working ? " [working...]" : " [completed]"}`
 }
 
+const ModelSelect = ({
+  llm,
+  credential,
+  onChange,
+}: { llm: llmProvider; credential: string; onChange: (_: string) => void }) => {
+  const [model, setModel] = useState(() => loadConfiguration(llm.name, "model"))
+  const [models, setModels] = useState<string[]>([model])
+
+  useEffect(() => {
+    const fetchModels = async () => {
+      const availableModels = await llm.models(credential)
+
+      availableModels.sort()
+      setModels(availableModels)
+
+      const selectedModel = availableModels.includes(model) ? model : ""
+      setModel(selectedModel)
+      onChange(selectedModel)
+    }
+
+    fetchModels()
+  }, [credential, llm, model, onChange])
+
+  return (
+    <TextField
+      select
+      label={llm.name}
+      value={model}
+      onChange={(e) => {
+        const value = e.target.value || ""
+        saveConfiguration(llm.name, "model", value)
+        setModel(value)
+        onChange(value)
+      }}
+    >
+      {models.map((model) => (
+        <MenuItem key={model} value={model}>
+          {model}
+        </MenuItem>
+      ))}
+    </TextField>
+  )
+}
+
+const ResponseField = ({ text, markdown }: { text: string; markdown: boolean }) => {
+  return markdown ? (
+    <TexMarkdown>{text}</TexMarkdown>
+  ) : (
+    text.split("\n").map((item, i, arr) => (
+      <Fragment key={item}>
+        {item}
+        {i < arr.length - 1 && <br />}
+      </Fragment>
+    ))
+  )
+}
+
 // LLMPanel is a component that displays the UI of the configurations for a single LLM provider.
-// 'sessionID' prop is used to start the LLM provider with the givin prompt and configurations.
+// 'sessionID' prop fires the LLM provider to generate the response for the givin prompt and configurations.
 export const LLMPanel = ({
   sessionId,
   instruction,
@@ -71,19 +125,7 @@ export const LLMPanel = ({
 
   const [markdown, setMarkdown] = useState(true)
 
-  const [model, setModel] = useState(() => loadConfiguration(llm.name, "model"))
-  const [models, setModels] = useState<string[]>([model])
-
-  useEffect(() => {
-    const fetchModels = async () => {
-      const availableModels = await llm.models(credential)
-      availableModels.sort()
-      setModels(availableModels)
-      setModel(availableModels.includes(model) ? model : "")
-    }
-
-    fetchModels()
-  }, [credential, llm, model])
+  const [model, setModel] = useState("")
 
   const breaker = useRef<llmStreamBreaker | null>(null)
 
@@ -95,69 +137,20 @@ export const LLMPanel = ({
   const response = useResponse({
     sessionId,
     starter: (onDelta) => {
-      ;(async () => {
+      const starter = async () => {
         breaker.current = await llm.start(credential, instruction, prompt, onDelta, { model })
-      })()
+      }
+      starter()
     },
     onEnd,
   })
 
-  const [speaking, setSpeaking] = useState(false)
-
-  const [chatter] = useState(() => {
-    if (loadCredential("polly") === "") {
-      return null
-    }
-
-    const [region, key, secret] = loadCredential("polly").split(":")
-    const chatter = ChattyKathy({
-      awsCredentials: new AWS.Credentials(key, secret),
-      awsRegion: region,
-      pollyVoiceId: loadCredential("polly-voice"),
-      speedRate: 1.2,
-    })
-    return chatter
-  })
-
-  const handleSpeak = (text: string) =>
-    chatter?.Speak(text, () => {
-      setSpeaking(false)
-    })
-  const handleSpeakStop = () => chatter?.ShutUp()
-
   return (
     <>
       <Stack spacing={1} width="100%">
-        <Stack spacing={2} direction="row" display="flex" alignItems="center">
-          <TextField
-            select
-            label={`${llm.name} model`}
-            value={model}
-            onChange={(e) => {
-              const value = e.target.value || ""
-              saveConfiguration(llm.name, "model", value)
-              setModel(value)
-            }}
-          >
-            {models.map((model) => (
-              <MenuItem key={model} value={model}>
-                {model}
-              </MenuItem>
-            ))}
-          </TextField>
-          {/* <Button onClick={fetchModels}>Reload</Button> */}
-        </Stack>
+        <ModelSelect llm={llm} credential={credential} onChange={(v) => setModel(v)} />
         <Stack direction="row" display="flex" alignItems="center">
-          {chatter && (
-            <Button
-              onClick={() => {
-                setSpeaking((s) => !s)
-                speaking ? handleSpeakStop() : handleSpeak(response)
-              }}
-            >
-              {speaking ? <StopCircleOutlinedIcon /> : <PlayCircleOutlinedIcon />}
-            </Button>
-          )}
+          <SpeechButton text={response} />
           <Button
             onClick={() => {
               setMarkdown((v) => !v)
@@ -166,16 +159,7 @@ export const LLMPanel = ({
             {markdown ? "Text" : "Markdown/Tex"}
           </Button>
         </Stack>
-        {markdown ? (
-          <Markdown>{response}</Markdown>
-        ) : (
-          response.split("\n").map((item, i, arr) => (
-            <Fragment key={item}>
-              {item}
-              {i < arr.length - 1 && <br />}
-            </Fragment>
-          ))
-        )}
+        <ResponseField text={response} markdown={markdown} />
       </Stack>
     </>
   )
