@@ -1,7 +1,7 @@
 import { Button, MenuItem, Stack, TextField } from "@mui/material"
 
 import { Fragment, useEffect, useRef, useState } from "react"
-import { llmProvider, llmStreahBreaker as llmStreamBreaker } from "./llm/llm"
+import { InstalledLLMs, llmProvider, llmStreahBreaker as llmStreamBreaker } from "./llm/llm"
 
 import TexMarkdown from "./TexMarkdown"
 import { loadConfiguration, saveConfiguration } from "./configurations"
@@ -52,9 +52,15 @@ const useResponse = ({
 const ModelSelect = ({
   llm,
   credential,
+  defaultModel,
   onChange,
-}: { llm: llmProvider; credential: string; onChange: (_: string) => void }) => {
-  const [model, setModel] = useState(() => loadConfiguration(llm.name, "model"))
+}: {
+  llm: llmProvider
+  credential: string
+  defaultModel: string
+  onChange: (_: string) => void
+}) => {
+  const [model, setModel] = useState(defaultModel)
   const [models, setModels] = useState<string[]>([model])
 
   useEffect(() => {
@@ -63,14 +69,16 @@ const ModelSelect = ({
 
       availableModels.sort()
       setModels(availableModels)
-
-      const selectedModel = availableModels.includes(model) ? model : ""
-      setModel(selectedModel)
-      onChange(selectedModel)
     }
 
     fetchModels()
-  }, [credential, llm, model, onChange])
+  }, [credential, llm])
+
+  useEffect(() => {
+    const selectedModel = models.includes(model) ? model : ""
+    setModel(selectedModel)
+    onChange(selectedModel)
+  }, [models, model, onChange])
 
   return (
     <TextField
@@ -79,7 +87,6 @@ const ModelSelect = ({
       value={model}
       onChange={(e) => {
         const value = e.target.value || ""
-        saveConfiguration(llm.name, "model", value)
         setModel(value)
         onChange(value)
       }}
@@ -106,26 +113,59 @@ const ResponseField = ({ text, markdown }: { text: string; markdown: boolean }) 
   )
 }
 
+export type PanelConfig = {
+  id: string
+  llmId: number
+  model: string
+}
+
+const loadConfig = (id: string) => {
+  return JSON.parse(
+    loadConfiguration(`panel${id}`, "") || `{"id":${id},"llmId":0,"model":""}`,
+  ) as PanelConfig
+}
+
+const saveConfig = (config: PanelConfig) => {
+  saveConfiguration(`panel${config.id}`, "", JSON.stringify(config))
+}
+
 // LLMPanel is a component that displays the UI of the configurations for a single LLM provider.
 // 'sessionID' prop fires the LLM provider to generate the response for the givin prompt and configurations.
 export const LLMPanel = ({
   sessionId,
   instruction,
   prompt,
-  llm,
+  id,
   onEnd,
+  onClose,
 }: {
   sessionId: string
   instruction: string
   prompt: string
-  llm: llmProvider
+  id: string
   onEnd: () => void
+  onClose: () => void
 }) => {
-  const credential = llm.apiKey || loadCredential(llm.name)
-
   const [markdown, setMarkdown] = useState(true)
 
-  const [model, setModel] = useState("")
+  const [config, setConfig] = useState(() => loadConfig(id) || { id, llmId: 0, model: "" })
+  const [llmId, setLlmId] = useState(() => config.llmId)
+  const llm = InstalledLLMs[llmId]
+  const credential = llm.apiKey || loadCredential(llm.name)
+
+  const [model, setModel] = useState(config.model)
+
+  useEffect(() => {
+    saveConfig(config)
+  }, [config])
+
+  useEffect(() => {
+    setConfig((c) => ({ ...c, model }))
+  }, [model])
+
+  useEffect(() => {
+    setConfig((c) => ({ ...c, llmId }))
+  }, [llmId])
 
   const breaker = useRef<llmStreamBreaker | null>(null)
 
@@ -138,7 +178,9 @@ export const LLMPanel = ({
     sessionId,
     starter: (onDelta) => {
       const starter = async () => {
-        breaker.current = await llm.start(credential, instruction, prompt, onDelta, { model })
+        breaker.current = await llm.start(credential, instruction, prompt, onDelta, {
+          model: config.model,
+        })
       }
       starter()
     },
@@ -148,7 +190,31 @@ export const LLMPanel = ({
   return (
     <>
       <Stack spacing={1} width="100%">
-        <ModelSelect llm={llm} credential={credential} onChange={(v) => setModel(v)} />
+        <Stack direction="row" spacing={1} display="flex" alignItems="center">
+          <TextField
+            select
+            label="LLM"
+            value={config.llmId}
+            onChange={(e) => setLlmId(+(e.target.value || "0"))}
+          >
+            {InstalledLLMs.map(
+              (llm, i) =>
+                i !== 0 && (
+                  <MenuItem key={llm.name} value={i}>
+                    {llm.name}
+                  </MenuItem>
+                ),
+            )}
+          </TextField>
+          <ModelSelect
+            llm={llm}
+            credential={credential}
+            defaultModel={config.model}
+            // onChange={() => {}}
+            onChange={(v) => setModel(v)}
+          />
+          <Button onClick={() => onClose()}>Close</Button>
+        </Stack>
         <Stack direction="row" display="flex" alignItems="center">
           <SpeechButton text={response} />
           <Button

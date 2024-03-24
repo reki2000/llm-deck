@@ -1,4 +1,4 @@
-import { Box, Button, CssBaseline, Link, MenuItem, Stack, TextField } from "@mui/material"
+import { Box, Button, CssBaseline, Grid, Link, MenuItem, Stack, TextField } from "@mui/material"
 
 import { useEffect, useState } from "react"
 import { InstalledLLMs } from "./llm/llm"
@@ -34,6 +34,14 @@ function App() {
     saveConfiguration("instructions", "", JSON.stringify(instructions))
   }, [instructions])
 
+  const [panelIds, setPanelIds] = useState<string[]>(
+    () => JSON.parse(loadConfiguration("panelIds", "") || "[]") as string[],
+  )
+
+  useEffect(() => {
+    saveConfiguration("panelIds", "", JSON.stringify(panelIds))
+  }, [panelIds])
+
   return (
     <>
       <CssBaseline />
@@ -51,10 +59,6 @@ function App() {
               setConfigDialogOpen(false)
             }}
           />
-          <Box>
-            Your API Keys will be stored in your browser's local storage and will NEVER be sent to
-            the host. However, avoid using untrusted hosts.
-          </Box>
         </Stack>
 
         <Stack direction="row" alignItems="center" spacing={1}>
@@ -125,19 +129,31 @@ function App() {
           >
             {sending > 0 ? `Stop ${sending}` : "Send"}
           </Button>
+          <Button
+            variant="contained"
+            onClick={() => {
+              setPanelIds((s) => [...s, `${new Date().getTime()}`])
+            }}
+          >
+            Add
+          </Button>
         </Stack>
-        <Stack direction="row" spacing={2}>
-          {[1, 2, 3].map((i, index) => (
-            <LLMPanel
-              key={`${InstalledLLMs[i].name}-${index}`}
-              llm={InstalledLLMs[i]}
-              sessionId={sessionId}
-              instruction={instructions[selectedInstruction] || ""}
-              prompt={prompt}
-              onEnd={() => setSending((c) => (c > 0 ? c - 1 : 0))}
-            />
+        <Grid container spacing={2}>
+          {panelIds.map((id) => (
+            <Grid key={id} item xs={12} md={6} xl={4}>
+              <LLMPanel
+                id={id}
+                sessionId={sessionId}
+                instruction={instructions[selectedInstruction] || ""}
+                prompt={prompt}
+                onEnd={() => setSending((c) => (c > 0 ? c - 1 : 0))}
+                onClose={() => {
+                  setPanelIds((s) => s.filter((c) => c !== id))
+                }}
+              />
+            </Grid>
           ))}
-        </Stack>
+        </Grid>
       </Stack>
     </>
   )

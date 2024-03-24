@@ -1,4 +1,5 @@
 import {
+  Box,
   Button,
   Dialog,
   DialogActions,
@@ -6,11 +7,10 @@ import {
   DialogProps,
   DialogTitle,
   MenuItem,
-  Select,
   Stack,
   Typography,
 } from "@mui/material"
-import { useState } from "react"
+import { ReactNode, useState } from "react"
 import { loadCredential, saveCredential } from "./credential"
 import { llmProvider } from "./llm/llm"
 
@@ -23,6 +23,7 @@ const CredentialField = (props: TextFieldProps) => {
   return (
     <TextField
       sx={{ width: "400px" }}
+      size="medium"
       {...props}
       type={showPassword ? "text" : "password"}
       InputProps={{
@@ -42,6 +43,15 @@ const CredentialField = (props: TextFieldProps) => {
   )
 }
 
+const ConfigItem = ({ label, children }: { label: string; children: ReactNode }) => (
+  <Stack direction="row" spacing={4} display="flex" alignItems="center">
+    <Typography width="100px" variant="h6">
+      {label}
+    </Typography>
+    {children}
+  </Stack>
+)
+
 export const ConfigDialog = ({
   llmProviders,
   onClose,
@@ -52,47 +62,47 @@ export const ConfigDialog = ({
 
   return (
     <Dialog {...props}>
-      <DialogTitle>LLM Provider Configurations</DialogTitle>
+      <DialogTitle>Configurations</DialogTitle>
       <DialogContent>
         <Stack spacing={4} p={2}>
+          <Box>
+            Your API Keys will be stored in your browser's local storage and will NEVER be sent to
+            the host. However, avoid using untrusted hosts.
+          </Box>
+
           {llmProviders.slice(1).map((llm) => {
             const [credential, setCredential] = useState(
               () => llm.apiKey || loadCredential(llm.name),
             )
 
             return (
-              <Stack key={llm.name} direction="row" spacing={4} display="flex" alignItems="center">
-                <Typography width="100px" variant="h6">
-                  {llm.name}
-                </Typography>
+              <ConfigItem key={llm.name} label={llm.name}>
                 <CredentialField
                   label={llm.apiKeyLabel}
                   defaultValue={credential}
-                  size="medium"
                   onChange={(e) => {
                     const s = e.target.value || ""
                     setCredential(s)
                     saveCredential(llm.name, s)
                   }}
                 />
-              </Stack>
+              </ConfigItem>
             )
           })}
-          <Stack direction="row" spacing={4} display="flex" alignItems="center">
-            <Typography width="100px" variant="h6">
-              AWS Polly
-            </Typography>
+          <ConfigItem label=" AWS Polly">
             <CredentialField
               label="REGION:ACCESS_KEY_ID:SECRET_ACCESS_KEY"
               defaultValue={pollyCredential}
-              size="medium"
               onChange={(e) => {
                 const s = e.target.value || ""
                 setPollyCredential(s)
                 saveCredential("polly", s)
               }}
             />
-            <Select
+          </ConfigItem>
+          <ConfigItem label="VoiceID">
+            <TextField
+              select
               value={voice}
               label="Voice"
               onChange={(e) => {
@@ -102,15 +112,13 @@ export const ConfigDialog = ({
               }}
             >
               <MenuItem value="Mizuki">Mizuki</MenuItem>
-              <MenuItem value="Kazumi">Kazumi</MenuItem>
-              <MenuItem value="Tomoko">Tomoko</MenuItem>
               <MenuItem value="Takumi">Takumi</MenuItem>
-            </Select>
-          </Stack>
+            </TextField>
+          </ConfigItem>
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={() => onClose?.({}, "backdropClick")}>Close</Button>
+        <Button onClick={() => onClose?.({}, "backdropClick")}>Done</Button>
       </DialogActions>
     </Dialog>
   )
