@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "build-ghpages": "tsc && vite build --base=/llm-deck/",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "lint": "biome lint .",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -19,7 +19,6 @@
     "@google/generative-ai": "^0.2.1",
     "@mui/icons-material": "^5.15.10",
     "@mui/material": "^5.15.10",
-    "aws-sdk": "^2.1584.0",
     "openai": "^4.28.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -36,9 +35,7 @@
     "@typescript-eslint/eslint-plugin": "^7.0.2",
     "@typescript-eslint/parser": "^7.0.2",
     "@vitejs/plugin-react-swc": "^3.5.0",
-    "eslint": "^8.56.0",
-    "eslint-plugin-react-hooks": "^4.6.0",
-    "eslint-plugin-react-refresh": "^0.4.5",
+    "rollup-plugin-visualizer": "^5.12.0",
     "typescript": "^5.2.2",
     "vite": "^5.1.4"
   }

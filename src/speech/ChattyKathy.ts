@@ -1,12 +1,11 @@
 import { Polly, SynthesizeSpeechCommandInput } from "@aws-sdk/client-polly"
-import AWS from "aws-sdk"
-
+import { AwsCredentialIdentityProvider } from "@smithy/types"
 /*
  * This code is based on https://github.com/ejbeaty/ChattyKathy/blob/master/ChattyKathy.js
  */
 
 type ChattyKathySettings = {
-  awsCredentials: AWS.Credentials
+  awsCredentials: AwsCredentialIdentityProvider
   awsRegion: string
   pollyVoiceId?: string
   speedRate: number
@@ -88,9 +87,7 @@ export const ChattyKathy = (settings: ChattyKathySettings) => {
   // Play audio
   function playAudio(audioStream: Uint8Array) {
     return new Promise<void>((success, _) => {
-      const arrayBuffer = audioStream.buffer
-      const blob = new Blob([arrayBuffer])
-
+      const blob = new Blob([audioStream.buffer], { type: "audio/mp3" })
       const url = URL.createObjectURL(blob)
       audioElement.src = url
       audioElement.addEventListener("ended", () => {

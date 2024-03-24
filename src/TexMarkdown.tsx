@@ -3,8 +3,8 @@ import ReactMarkdown, { Options } from "react-markdown"
 import rehypeKatex from "rehype-katex"
 import remarkMath from "remark-math"
 
-const Markdown = (props: Readonly<Options>) => (
+const TexMarkdown = (props: Readonly<Options>) => (
   <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]} {...props} />
 )
 
-export default Markdown
+export default TexMarkdown
