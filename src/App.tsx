@@ -21,7 +21,7 @@ function App() {
       setSending(0)
     } else {
       setSessionId(`${Math.random()}`)
-      setSending(3)
+      setSending(panelIds.length)
     }
   }
 

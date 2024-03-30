@@ -46,7 +46,7 @@ const useResponse = ({
     }
   }, [sessionId, starter, onEnd])
 
-  return `${response}${working ? " [working...]" : " [completed]"}`
+  return { response, working }
 }
 
 const ModelSelect = ({
@@ -177,7 +177,7 @@ export const LLMPanel = ({
     breaker.current = null
   }
 
-  const response = useResponse({
+  const { response, working } = useResponse({
     sessionId,
     starter: (onDelta) => {
       const starter = async () => {
@@ -219,7 +219,7 @@ export const LLMPanel = ({
           <Button onClick={() => onClose()}>Close</Button>
         </Stack>
         <Stack direction="row" display="flex" alignItems="center">
-          <SpeechButton text={response} />
+          <SpeechButton text={response} working={working} />
           <Button
             onClick={() => {
               setMarkdown((v) => !v)
@@ -229,6 +229,7 @@ export const LLMPanel = ({
           </Button>
         </Stack>
         <ResponseField text={response} markdown={markdown} />
+        {working ? "[working...]" : "[completed]"}
       </Stack>
     </>
   )

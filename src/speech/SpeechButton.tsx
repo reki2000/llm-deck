@@ -1,5 +1,5 @@
 import { Button } from "@mui/material"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 import PlayCircleOutlinedIcon from "@mui/icons-material/PlayCircleOutlined"
 import StopCircleOutlinedIcon from "@mui/icons-material/StopCircleOutlined"
@@ -7,7 +7,7 @@ import StopCircleOutlinedIcon from "@mui/icons-material/StopCircleOutlined"
 import { loadCredential } from "../credential"
 import { ChattyKathy } from "./ChattyKathy"
 
-export const SpeechButton = ({ text }: { text: string }) => {
+export const SpeechButton = ({ text, working }: { text: string; working: boolean }) => {
   const [chatter] = useState(() => {
     if (loadCredential("polly") === "") {
       return null
@@ -27,23 +27,46 @@ export const SpeechButton = ({ text }: { text: string }) => {
   })
 
   const [speaking, setSpeaking] = useState(false)
+  const [spokenText, setSpokenText] = useState("")
 
-  const handleSpeak = (text: string) =>
-    chatter?.Speak(text, () => {
-      setSpeaking(false)
-    })
-  const handleSpeakStop = () => chatter?.ShutUp()
+  useEffect(() => {
+    if (speaking) {
+      if (text.length >= spokenText.length && text.startsWith(spokenText)) {
+        const diff = text.slice(spokenText.length)
+        const sentence = working ? detectSentence(diff) : diff
+        if (sentence !== "") {
+          setSpokenText(spokenText + sentence)
+          chatter?.Speak(sentence, () => {})
+        }
+      }
+    }
+  }, [speaking, text, spokenText, chatter, working])
+
+  const handleSpeakStop = () => {
+    setSpeaking(false)
+    setSpokenText("")
+    chatter?.ShutUp()
+  }
 
   return (
     chatter && (
       <Button
         onClick={() => {
           setSpeaking((s) => !s)
-          speaking ? handleSpeakStop() : handleSpeak(text)
+          speaking && handleSpeakStop()
         }}
       >
         {speaking ? <StopCircleOutlinedIcon /> : <PlayCircleOutlinedIcon />}
       </Button>
     )
   )
+}
+
+const detectSentence = (text: string) => {
+  const sentences = text.match(/(.*?[。」".!?！？])/)
+  if (sentences && sentences.length > 1) {
+    console.log("input: ", text, " detect: ", sentences[1])
+    return sentences[1]
+  }
+  return ""
 }
