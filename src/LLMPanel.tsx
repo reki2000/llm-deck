@@ -1,4 +1,4 @@
-import { Button, MenuItem, Stack, TextField } from "@mui/material"
+import { Button, CircularProgress, MenuItem, Stack, TextField } from "@mui/material"
 
 import { Fragment, useEffect, useRef, useState } from "react"
 import { InstalledLLMs, llmProvider, llmStreahBreaker as llmStreamBreaker } from "./llm/llm"
@@ -61,10 +61,11 @@ const ModelSelect = ({
   onChange: (_: string) => void
 }) => {
   const [model, setModel] = useState(defaultModel)
-  const [models, setModels] = useState<string[]>([model])
+  const [models, setModels] = useState<string[]>([])
 
   useEffect(() => {
     const fetchModels = async () => {
+      setModels([])
       const availableModels = await llm.models(credential)
 
       availableModels.sort()
@@ -75,12 +76,14 @@ const ModelSelect = ({
   }, [credential, llm])
 
   useEffect(() => {
-    const selectedModel = models.includes(model) ? model : ""
+    const selectedModel = models.includes(model) ? model : models[0] || ""
     setModel(selectedModel)
     onChange(selectedModel)
-  }, [models, model, onChange])
+  }, [models, models[0], model, onChange])
 
-  return (
+  return models.length === 0 ? (
+    <CircularProgress />
+  ) : (
     <TextField
       select
       label={llm.name}
