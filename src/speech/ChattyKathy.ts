@@ -11,6 +11,12 @@ type ChattyKathySettings = {
   speedRate: number
 }
 
+type Message = {
+  msg: string
+  lang?: string
+  voice?: string
+}
+
 export const ChattyKathy = (settings: ChattyKathySettings) => {
   // Add audio node to html
   const elementId = `audioElement${new Date().getTime()}`
@@ -19,7 +25,7 @@ export const ChattyKathy = (settings: ChattyKathySettings) => {
   document.body.appendChild(audioElement)
 
   let isSpeaking = false
-  let playlist = [] as string[]
+  let playlist = [] as Message[]
   let _onEnd = () => {}
 
   const polly = new Polly({
@@ -29,12 +35,12 @@ export const ChattyKathy = (settings: ChattyKathySettings) => {
 
   return {
     // Speak
-    Speak: (msg: string, onEnd: () => void) => {
+    Speak: (msg: string, onEnd: () => void, { lang, voice }: { lang?: string; voice?: string }) => {
       _onEnd = onEnd
       if (isSpeaking) {
-        playlist.push(msg)
+        playlist.push({ msg, lang, voice })
       } else {
-        say(msg).then(sayNext)
+        say({ msg, lang, voice }).then(sayNext)
       }
     },
 
@@ -42,7 +48,7 @@ export const ChattyKathy = (settings: ChattyKathySettings) => {
     ShutUp: () => shutUp(),
 
     // Speak & return promise
-    SpeakWithPromise: (msg: string) => say(msg),
+    SpeakWithPromise: (msg: Message) => say(msg),
 
     IsSpeaking: () => isSpeaking,
   }
@@ -55,7 +61,7 @@ export const ChattyKathy = (settings: ChattyKathySettings) => {
   }
 
   // Speak the message
-  async function say(message: string) {
+  async function say(message: Message) {
     isSpeaking = true
     await playAudio(await requestSpeechFromAWS(message))
   }
@@ -72,11 +78,14 @@ export const ChattyKathy = (settings: ChattyKathySettings) => {
   }
 
   // Make request to Amazon polly
-  async function requestSpeechFromAWS(message: string) {
+  async function requestSpeechFromAWS(message: Message) {
+    const langMsg = message.lang
+      ? `<lang xml:lang="${message.lang}">${message.msg}</lang>`
+      : message.msg
     const params = {
       OutputFormat: "mp3",
-      Text: `<speak><prosody rate="${settings.speedRate * 100}%">${message}</prosody></speak>`,
-      VoiceId: settings.pollyVoiceId,
+      Text: `<speak><prosody rate="${settings.speedRate * 100}%">${langMsg}</prosody></speak>`,
+      VoiceId: message.voice || settings.pollyVoiceId,
       TextType: "ssml",
     } as SynthesizeSpeechCommandInput
 

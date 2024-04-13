@@ -1,8 +1,8 @@
 import { Button } from "@mui/material"
 import { useEffect, useState } from "react"
 
+import PauseCircleOutlinedIcon from "@mui/icons-material/PauseCircleOutlined"
 import PlayCircleOutlinedIcon from "@mui/icons-material/PlayCircleOutlined"
-import StopCircleOutlinedIcon from "@mui/icons-material/StopCircleOutlined"
 
 import { loadCredential } from "../credential"
 import { ChattyKathy } from "./ChattyKathy"
@@ -27,25 +27,28 @@ export const SpeechButton = ({ text, working }: { text: string; working: boolean
   })
 
   const [speaking, setSpeaking] = useState(false)
-  const [spokenText, setSpokenText] = useState("")
+  const [willSpeakFrom, setWillSpeakFrom] = useState(0)
 
   useEffect(() => {
     if (speaking) {
-      if (text.length >= spokenText.length && text.startsWith(spokenText)) {
-        const diff = text.slice(spokenText.length)
-        const sentence = working ? detectSentence(diff) : diff
+      if (text.length >= willSpeakFrom) {
+        const diff = text.slice(willSpeakFrom)
+        const sentence = detectSentence(diff) || (!working && diff) || ""
+        const isEnglish = /^[a-zA-Z0-9\s.,!?'"-]*$/.test(sentence)
+
         if (sentence !== "") {
-          setSpokenText(spokenText + sentence)
-          chatter?.Speak(sentence, () => {})
+          setWillSpeakFrom((s) => s + sentence.length)
+          chatter?.Speak(sentence, () => {}, isEnglish ? { lang: "en-US", voice: "Joanna" } : {})
         }
+      } else {
+        handleSpeakStop()
       }
     }
-  }, [speaking, text, spokenText, chatter, working])
+  }, [speaking, text, willSpeakFrom, chatter, working])
 
   const handleSpeakStop = () => {
-    setSpeaking(false)
-    setSpokenText("")
     chatter?.ShutUp()
+    setWillSpeakFrom(0)
   }
 
   return (
@@ -56,16 +59,15 @@ export const SpeechButton = ({ text, working }: { text: string; working: boolean
           speaking && handleSpeakStop()
         }}
       >
-        {speaking ? <StopCircleOutlinedIcon /> : <PlayCircleOutlinedIcon />}
+        {speaking ? <PauseCircleOutlinedIcon /> : <PlayCircleOutlinedIcon />}
       </Button>
     )
   )
 }
 
 const detectSentence = (text: string) => {
-  const sentences = text.match(/(.*?[。」".!?！？])/)
+  const sentences = text.match(/(.*?[\n".!?。「」！？『』“]+)/)
   if (sentences && sentences.length > 1) {
-    console.log("input: ", text, " detect: ", sentences[1])
     return sentences[1]
   }
   return ""

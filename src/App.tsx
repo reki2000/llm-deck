@@ -1,7 +1,7 @@
 import { Box, Button, CssBaseline, Grid, Link, MenuItem, Stack, TextField } from "@mui/material"
 
 import { useEffect, useState } from "react"
-import { InstalledLLMs } from "./llm/llm"
+import { InstalledLLMs } from "./llm/installed"
 
 import { ConfigDialog } from "./ConfigDialog"
 import { LLMPanel } from "./LLMPanel"

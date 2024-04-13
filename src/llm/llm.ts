@@ -1,7 +1,3 @@
-import { bedrockProvider } from "./bedrock"
-import { openAIProvider } from "./openai"
-import { vertexAIProvider } from "./vertexai"
-
 export type llmGenerate = (
   credential: string,
   instruction: string,
@@ -26,33 +22,6 @@ export type llmProvider = {
   apiKeyLabel: string
   apiKey: string
   models: (s: string) => Promise<string[]>
+  defaultModel: string
   start: llmGenerate
 }
-
-const dummyProvider: llmProvider = {
-  name: "dummy",
-  apiKeyLabel: "API_KEY",
-  apiKey: "",
-  models: async () => ["dummy-model"],
-  start: async (_, __, prompt, handle) => {
-    handle(prompt, false)
-    let alive = true
-    ;(async () => {
-      while (Math.random() < 0.95 && alive) {
-        await new Promise((resolve) => setTimeout(resolve, 100))
-        handle("dummy ", false)
-      }
-      handle("completed.", true)
-    })()
-    return () => {
-      alive = false
-    }
-  },
-}
-
-export const InstalledLLMs: llmProvider[] = [
-  dummyProvider,
-  openAIProvider,
-  vertexAIProvider,
-  bedrockProvider,
-]

@@ -1,7 +1,8 @@
 import { Button, CircularProgress, MenuItem, Stack, TextField } from "@mui/material"
 
 import { Fragment, useEffect, useRef, useState } from "react"
-import { InstalledLLMs, llmProvider, llmStreahBreaker as llmStreamBreaker } from "./llm/llm"
+import { InstalledLLMs } from "./llm/installed"
+import { llmProvider, llmStreahBreaker as llmStreamBreaker } from "./llm/llm"
 
 import TexMarkdown from "./TexMarkdown"
 import { loadConfiguration, saveConfiguration } from "./configurations"
@@ -64,10 +65,13 @@ const ModelSelect = ({
   const [models, setModels] = useState<string[]>([])
 
   useEffect(() => {
+    setModel(defaultModel)
+  }, [defaultModel])
+
+  useEffect(() => {
     const fetchModels = async () => {
       setModels([])
       const availableModels = await llm.models(credential)
-
       availableModels.sort()
       setModels(availableModels)
     }
@@ -76,12 +80,17 @@ const ModelSelect = ({
   }, [credential, llm])
 
   useEffect(() => {
-    const selectedModel = models.includes(model) ? model : models[0] || ""
-    setModel(selectedModel)
-    onChange(selectedModel)
-  }, [models, models[0], model, onChange])
+    if (models.length === 0) {
+      return
+    }
+    const selectedModel = models.includes(defaultModel) ? defaultModel : models.at(0) || ""
+    if (selectedModel !== defaultModel) {
+      setModel(selectedModel)
+      onChange(selectedModel)
+    }
+  }, [models, defaultModel, onChange])
 
-  return models.length === 0 ? (
+  return models.length === 0 || !models.includes(model) ? (
     <CircularProgress />
   ) : (
     <TextField
@@ -151,7 +160,7 @@ export const LLMPanel = ({
 }) => {
   const [markdown, setMarkdown] = useState(true)
 
-  const [config, setConfig] = useState(() => loadConfig(id) || { id, llmId: 0, model: "" })
+  const [config, setConfig] = useState(() => loadConfig(id))
   const [llmId, setLlmId] = useState(() => config.llmId)
   const llm = InstalledLLMs[llmId]
   const credential = llm.apiKey || loadCredential(llm.name)
@@ -212,7 +221,7 @@ export const LLMPanel = ({
           <ModelSelect
             llm={llm}
             credential={credential}
-            defaultModel={config.model}
+            defaultModel={config.model || llm.defaultModel}
             // onChange={() => {}}
             onChange={(v) => setModel(v)}
           />

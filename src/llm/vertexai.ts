@@ -55,4 +55,5 @@ export const vertexAIProvider: llmProvider = {
   apiKeyLabel: "ACCESS_KEY",
   apiKey: import.meta.env.VITE_GCP_ACCESS_KEY,
   models: listModels,
+  defaultModel: "gemini-1.0-pro-latest",
 }

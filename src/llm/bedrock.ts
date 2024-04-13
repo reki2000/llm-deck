@@ -110,4 +110,5 @@ export const bedrockProvider = {
   apiKeyLabel: "REGION:ACCESS_KEY_ID:SECRET_ACCESS_KEY",
   apiKey: import.meta.env.VITE_AWS_CREDENTIALS,
   models: listModels,
+  defaultModel: "anthoropic.claude-3-sonnet-20240229-v1:0",
 }
