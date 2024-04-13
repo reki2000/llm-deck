@@ -8,47 +8,8 @@ import TexMarkdown from "./TexMarkdown"
 import { loadConfiguration, saveConfiguration } from "./configurations"
 import { loadCredential } from "./credential"
 
+import { useResponse } from "./response"
 import { SpeechButton } from "./speech/SpeechButton"
-
-const useResponse = ({
-  sessionId,
-  starter,
-  onEnd,
-}: {
-  sessionId: string
-  starter: (onDelta: (delta: string, done: boolean) => void) => void
-  onEnd: () => void
-}) => {
-  const [response, setResponse] = useState("")
-  const [working, setWorking] = useState(false)
-
-  const currentSessionId = useRef("")
-
-  useEffect(() => {
-    if (sessionId === "" && currentSessionId.current !== "") {
-      onEnd()
-      currentSessionId.current = ""
-      setWorking(false)
-      return
-    }
-
-    if (currentSessionId.current !== sessionId) {
-      currentSessionId.current = sessionId
-      setResponse("")
-      setWorking(true)
-      starter((delta, done) => {
-        setResponse((s) => `${s}${delta}`)
-        if (done) {
-          onEnd()
-          setWorking(false)
-          return
-        }
-      })
-    }
-  }, [sessionId, starter, onEnd])
-
-  return { response, working }
-}
 
 const ModelSelect = ({
   llm,
@@ -83,12 +44,16 @@ const ModelSelect = ({
     if (models.length === 0) {
       return
     }
-    const selectedModel = models.includes(defaultModel) ? defaultModel : models.at(0) || ""
+    const selectedModel = models.includes(defaultModel)
+      ? defaultModel
+      : models.includes(llm.defaultModel)
+        ? llm.defaultModel
+        : models.at(0) || ""
     if (selectedModel !== defaultModel) {
       setModel(selectedModel)
       onChange(selectedModel)
     }
-  }, [models, defaultModel, onChange])
+  }, [models, defaultModel, onChange, llm.defaultModel])
 
   return models.length === 0 || !models.includes(model) ? (
     <CircularProgress />
@@ -133,7 +98,7 @@ export type PanelConfig = {
 
 const loadConfig = (id: string) => {
   return JSON.parse(
-    loadConfiguration(`panel${id}`, "") || `{"id":${id},"llmId":0,"model":""}`,
+    loadConfiguration(`panel${id}`, "") || `{"id":${id},"llmId":1,"model":""}`,
   ) as PanelConfig
 }
 
@@ -207,7 +172,7 @@ export const LLMPanel = ({
             select
             label="LLM"
             value={config.llmId}
-            onChange={(e) => setLlmId(+(e.target.value || "0"))}
+            onChange={(e) => setLlmId(+(e.target.value || "1"))}
           >
             {InstalledLLMs.map(
               (llm, i) =>

@@ -1,19 +1,20 @@
-import { Box, Button, CssBaseline, Grid, Link, MenuItem, Stack, TextField } from "@mui/material"
+import { Box, Button, CssBaseline, Grid, Link, Stack, TextField } from "@mui/material"
 
 import { useEffect, useState } from "react"
 import { InstalledLLMs } from "./llm/installed"
 
 import { ConfigDialog } from "./ConfigDialog"
+import { InstructionPanel } from "./Instrunctions"
 import { LLMPanel } from "./LLMPanel"
 import { loadConfiguration, saveConfiguration } from "./configurations"
-
-type Instructions = { [id: string]: string }
 
 function App() {
   const [configDialogOpen, setConfigDialogOpen] = useState(false)
   const [prompt, setPrompt] = useState("")
   const [sending, setSending] = useState(0)
   const [sessionId, setSessionId] = useState("")
+
+  const [instruction, setInstruction] = useState("")
 
   const handleSend = async () => {
     if (sending > 0) {
@@ -24,15 +25,6 @@ function App() {
       setSending(panelIds.length)
     }
   }
-
-  const [instructions, setInstructions] = useState<Instructions>(() => {
-    return JSON.parse(loadConfiguration("instructions", "") || "{}") as Instructions
-  })
-  const [selectedInstruction, setSelectedInstruction] = useState("")
-
-  useEffect(() => {
-    saveConfiguration("instructions", "", JSON.stringify(instructions))
-  }, [instructions])
 
   const [panelIds, setPanelIds] = useState<string[]>(
     () => JSON.parse(loadConfiguration("panelIds", "") || "[]") as string[],
@@ -61,49 +53,7 @@ function App() {
           />
         </Stack>
 
-        <Stack direction="row" alignItems="center" spacing={1}>
-          <TextField
-            select
-            label="instruction"
-            fullWidth
-            value={selectedInstruction}
-            onChange={(e) => setSelectedInstruction(e.target.value)}
-          >
-            {Object.entries(instructions).map(([id, text]) => (
-              <MenuItem key={id} value={id} selected={id === selectedInstruction}>
-                {text}
-              </MenuItem>
-            ))}
-          </TextField>
-          <Button
-            variant="contained"
-            color="warning"
-            onClick={() => {
-              setSelectedInstruction("")
-              setInstructions((s) => {
-                delete s[selectedInstruction]
-                return { ...s }
-              })
-            }}
-          >
-            Delete
-          </Button>
-          <Button
-            variant="contained"
-            onClick={() => {
-              const id = `${new Date().getTime()}`
-              setInstructions((s) => {
-                if (!Object.values(s).includes(prompt)) {
-                  s[id] = prompt
-                }
-                return { ...s }
-              })
-              setSelectedInstruction(id)
-            }}
-          >
-            Add
-          </Button>
-        </Stack>
+        <InstructionPanel onChange={setInstruction} />
 
         <Stack direction="row" alignItems="center" spacing={1}>
           <TextField
@@ -129,14 +79,6 @@ function App() {
           >
             {sending > 0 ? `Stop ${sending}` : "Send"}
           </Button>
-          <Button
-            variant="contained"
-            onClick={() => {
-              setPanelIds((s) => [...s, `${new Date().getTime()}`])
-            }}
-          >
-            Add
-          </Button>
         </Stack>
         <Grid container spacing={2}>
           {panelIds.map((id) => (
@@ -144,7 +86,7 @@ function App() {
               <LLMPanel
                 id={id}
                 sessionId={sessionId}
-                instruction={instructions[selectedInstruction] || ""}
+                instruction={instruction}
                 prompt={prompt}
                 onEnd={() => setSending((c) => (c > 0 ? c - 1 : 0))}
                 onClose={() => {
@@ -153,6 +95,15 @@ function App() {
               />
             </Grid>
           ))}
+          <Box>
+            <Button
+              onClick={() => {
+                setPanelIds((s) => [...s, `${new Date().getTime()}`])
+              }}
+            >
+              Add Panel
+            </Button>
+          </Box>
         </Grid>
       </Stack>
     </>
