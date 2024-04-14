@@ -44,13 +44,15 @@ function App() {
           <Button variant="outlined" onClick={() => setConfigDialogOpen(true)}>
             Config
           </Button>
-          <ConfigDialog
-            open={configDialogOpen}
-            llmProviders={InstalledLLMs}
-            onClose={() => {
-              setConfigDialogOpen(false)
-            }}
-          />
+          {configDialogOpen && (
+            <ConfigDialog
+              open={configDialogOpen}
+              llmProviders={InstalledLLMs}
+              onClose={() => {
+                setConfigDialogOpen(false)
+              }}
+            />
+          )}
         </Stack>
 
         <InstructionPanel onChange={setInstruction} />
@@ -95,7 +97,7 @@ function App() {
               />
             </Grid>
           ))}
-          <Box>
+          <Box key="add-button">
             <Button
               onClick={() => {
                 setPanelIds((s) => [...s, `${new Date().getTime()}`])

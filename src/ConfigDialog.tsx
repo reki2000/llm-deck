@@ -16,6 +16,7 @@ import { llmProvider } from "./llm/llm"
 
 import { Visibility, VisibilityOff } from "@mui/icons-material"
 import { IconButton, InputAdornment, TextField, TextFieldProps } from "@mui/material"
+import { voicesEn, voicesJp } from "./speech/pollyVoices"
 
 const CredentialField = (props: TextFieldProps) => {
   const [showPassword, setShowPassword] = useState(false)
@@ -58,7 +59,8 @@ export const ConfigDialog = ({
   ...props
 }: DialogProps & { llmProviders: llmProvider[] }) => {
   const [pollyCredential, setPollyCredential] = useState(() => loadCredential("polly"))
-  const [voice, setVoice] = useState(() => loadCredential("polly-voice") || "Mizuki")
+  const [voiceJp, setVoiceJp] = useState(() => loadCredential("polly-voice-jp") || "Mizuki")
+  const [voiceEn, setVoiceEn] = useState(() => loadCredential("polly-voice-en") || "Joey")
 
   return (
     <Dialog {...props}>
@@ -100,19 +102,44 @@ export const ConfigDialog = ({
               }}
             />
           </ConfigItem>
-          <ConfigItem label="VoiceID">
+          <ConfigItem label="VoiceID:JP">
             <TextField
               select
-              value={voice}
-              label="Voice"
+              value={voiceJp}
+              label="VoiceID"
               onChange={(e) => {
-                const s = e.target.value || "Mizuki"
-                setVoice(s)
-                saveCredential("polly-voice", s)
+                const s = e.target.value
+                setVoiceJp(s)
+                saveCredential("polly-voice-jp", s)
               }}
             >
-              <MenuItem value="Mizuki">Mizuki</MenuItem>
-              <MenuItem value="Takumi">Takumi</MenuItem>
+              {voicesJp.map((voice) => (
+                <MenuItem key={voice.name} value={voice.name}>
+                  {`${voice.name}(${voice.gender}) ${voice.neural ? "TTS" : ""} ${
+                    voice.longform ? "Long" : ""
+                  } ${voice.bilingual ? "Bi" : ""}`}
+                </MenuItem>
+              ))}
+            </TextField>
+          </ConfigItem>
+          <ConfigItem label="VoiceID:EN">
+            <TextField
+              select
+              value={voiceEn}
+              label="VoiceID"
+              onChange={(e) => {
+                const s = e.target.value
+                setVoiceEn(s)
+                saveCredential("polly-voice-en", s)
+              }}
+            >
+              {voicesEn.map((voice) => (
+                <MenuItem key={voice.name} value={voice.name}>
+                  {`${voice.name}(${voice.gender}) ${voice.neural ? "TTS" : ""} ${
+                    voice.longform ? "Long" : ""
+                  } ${voice.bilingual ? "Bi" : ""}`}
+                </MenuItem>
+              ))}
             </TextField>
           </ConfigItem>
         </Stack>

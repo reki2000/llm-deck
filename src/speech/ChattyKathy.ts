@@ -1,5 +1,7 @@
 import { Polly, SynthesizeSpeechCommandInput } from "@aws-sdk/client-polly"
 import { AwsCredentialIdentityProvider } from "@smithy/types"
+import { PollyVoice, getVoiceByName } from "./pollyVoices"
+
 /*
  * This code is based on https://github.com/ejbeaty/ChattyKathy/blob/master/ChattyKathy.js
  */
@@ -7,14 +9,13 @@ import { AwsCredentialIdentityProvider } from "@smithy/types"
 type ChattyKathySettings = {
   awsCredentials: AwsCredentialIdentityProvider
   awsRegion: string
-  pollyVoiceId?: string
+  defaultVoice: PollyVoice
   speedRate: number
 }
 
 type Message = {
   msg: string
-  lang?: string
-  voice?: string
+  voice?: PollyVoice
 }
 
 export const ChattyKathy = (settings: ChattyKathySettings) => {
@@ -35,12 +36,12 @@ export const ChattyKathy = (settings: ChattyKathySettings) => {
 
   return {
     // Speak
-    Speak: (msg: string, onEnd: () => void, { lang, voice }: { lang?: string; voice?: string }) => {
+    Speak: (msg: string, onEnd: () => void, voice?: PollyVoice) => {
       _onEnd = onEnd
       if (isSpeaking) {
-        playlist.push({ msg, lang, voice })
+        playlist.push({ msg, voice })
       } else {
-        say({ msg, lang, voice }).then(sayNext)
+        say({ msg, voice }).then(sayNext)
       }
     },
 
@@ -79,13 +80,17 @@ export const ChattyKathy = (settings: ChattyKathySettings) => {
 
   // Make request to Amazon polly
   async function requestSpeechFromAWS(message: Message) {
-    const langMsg = message.lang
-      ? `<lang xml:lang="${message.lang}">${message.msg}</lang>`
+    const langMsg = message.voice
+      ? `<lang xml:lang="${message.voice.lang}">${message.msg}</lang>`
       : message.msg
+
+    const voice = message.voice || settings.defaultVoice
+
     const params = {
       OutputFormat: "mp3",
       Text: `<speak><prosody rate="${settings.speedRate * 100}%">${langMsg}</prosody></speak>`,
-      VoiceId: message.voice || settings.pollyVoiceId,
+      VoiceId: voice.name,
+      Engine: voice?.neural ? "neural" : "standard",
       TextType: "ssml",
     } as SynthesizeSpeechCommandInput
 

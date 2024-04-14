@@ -6,8 +6,13 @@ import PlayCircleOutlinedIcon from "@mui/icons-material/PlayCircleOutlined"
 
 import { loadCredential } from "../credential"
 import { ChattyKathy } from "./ChattyKathy"
+import { detectLang } from "./langDetector"
+import { getVoiceByName, recommendVoice } from "./pollyVoices"
 
 export const SpeechButton = ({ text, working }: { text: string; working: boolean }) => {
+  const voiceEn = loadCredential("polly-voice-en")
+  const voiceJp = loadCredential("polly-voice-jp")
+
   const [chatter] = useState(() => {
     if (loadCredential("polly") === "") {
       return null
@@ -20,7 +25,7 @@ export const SpeechButton = ({ text, working }: { text: string; working: boolean
         secretAccessKey,
       }),
       awsRegion: region,
-      pollyVoiceId: loadCredential("polly-voice"),
+      defaultVoice: getVoiceByName(voiceJp),
       speedRate: 1.2,
     })
     return chatter
@@ -34,17 +39,25 @@ export const SpeechButton = ({ text, working }: { text: string; working: boolean
       if (text.length >= willSpeakFrom) {
         const diff = text.slice(willSpeakFrom)
         const sentence = detectSentence(diff) || (!working && diff) || ""
-        const isEnglish = /^[a-zA-Z0-9\s.,!?'"-]*$/.test(sentence)
 
         if (sentence !== "") {
           setWillSpeakFrom((s) => s + sentence.length)
-          chatter?.Speak(sentence, () => {}, isEnglish ? { lang: "en-US", voice: "Joanna" } : {})
+
+          const lang = detectLang(sentence)
+          const voice =
+            lang === "ja-JP"
+              ? getVoiceByName(voiceJp)
+              : lang === "en-US"
+                ? getVoiceByName(voiceEn)
+                : recommendVoice(lang)
+          console.log("speaking", lang, "[", voice, "]", sentence)
+          chatter?.Speak(sentence, () => {}, voice)
         }
       } else {
         handleSpeakStop()
       }
     }
-  }, [speaking, text, willSpeakFrom, chatter, working])
+  }, [speaking, text, willSpeakFrom, chatter, working, voiceEn, voiceJp])
 
   const handleSpeakStop = () => {
     chatter?.ShutUp()
@@ -66,7 +79,7 @@ export const SpeechButton = ({ text, working }: { text: string; working: boolean
 }
 
 const detectSentence = (text: string) => {
-  const sentences = text.match(/(.*?[\n".!?。「」！？『』“]+)/)
+  const sentences = text.match(/(.*?[\n",.;:!?。「」！？『』“]+)/)
   if (sentences && sentences.length > 1) {
     return sentences[1]
   }

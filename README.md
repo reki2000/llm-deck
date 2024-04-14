@@ -1,6 +1,10 @@
 # LLM Deck
 
-This app lets you see responses from multiple LLMs at once.
+This application enables simultaneous viewing of responses from multiple large language models (LLMs).
+
+Features:
+- Display responses in either raw text or Markdown format, enhanced with TeX support.
+- Convert responses to speech in real-time using AWS Polly, selecting the appropriate voice for the language.
 
 <img src="https://github.com/reki2000/llm-deck/assets/2533597/b7e4a642-3e6a-41c5-932d-30c59329ddf5" width="700px">
 
