@@ -1,6 +1,6 @@
 import { Polly, SynthesizeSpeechCommandInput } from "@aws-sdk/client-polly"
 import { AwsCredentialIdentityProvider } from "@smithy/types"
-import { PollyVoice, getVoiceByName } from "./pollyVoices"
+import { PollyVoice } from "./pollyVoices"
 
 /*
  * This code is based on https://github.com/ejbeaty/ChattyKathy/blob/master/ChattyKathy.js
