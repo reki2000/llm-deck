@@ -40,5 +40,5 @@ export const openAIProvider: llmProvider = {
   apiKeyLabel: "OPENAI_API_KEY",
   apiKey: import.meta.env.VITE_OPENAI_API_KEY,
   models: listModels,
-  defaultModel: "gpt-4-turbo-preview",
+  defaultModel: "gpt-4-turbo",
 }

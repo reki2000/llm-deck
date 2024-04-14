@@ -58,7 +58,7 @@ const generate: llmGenerate = async (apiKey, instruction, input, on, opts) => {
           },
         ],
         anthropic_version: "bedrock-2023-05-31",
-        max_tokens: 10000,
+        max_tokens: 4096,
       }
     : {
         prompt: `Human:${instruction} ${input} Assistant:`,
