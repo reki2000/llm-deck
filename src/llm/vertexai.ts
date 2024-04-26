@@ -2,7 +2,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai"
 import { llmGenerate, llmListModels, llmProvider } from "./llm"
 
 const listModels: llmListModels = async (apiKey: string) => {
-  const api = "https://generativelanguage.googleapis.com/v1/models"
+  const api = "https://generativelanguage.googleapis.com/v1beta/models"
   const req = { headers: { "content-type": "application/json", "x-goog-api-key": apiKey } }
   const models = await fetch(api, req).then((res) => res.json())
 
@@ -17,9 +17,10 @@ const listModels: llmListModels = async (apiKey: string) => {
 const generate: llmGenerate = async (apiKey, instruction, input, on, opts) => {
   const genAI = new GoogleGenerativeAI(apiKey)
 
-  const generativeModel = genAI.getGenerativeModel({
-    model: opts.model,
-  })
+  const generativeModel = genAI.getGenerativeModel(
+    { model: opts.model},
+    { apiVersion: 'v1beta', },
+  );
 
   const chat = generativeModel.startChat({})
   const chatInput1 = input
