@@ -130,7 +130,7 @@ export const LLMPanel = ({
   const llm = InstalledLLMs[llmId]
   const credential = llm.apiKey || loadCredential(llm.name)
 
-  const [model, setModel] = useState(config.model)
+  const [model, setModel] = useState(config.model || llm.defaultModel)
 
   useEffect(() => {
     saveConfig(config)
@@ -186,7 +186,7 @@ export const LLMPanel = ({
           <ModelSelect
             llm={llm}
             credential={credential}
-            defaultModel={config.model || llm.defaultModel}
+            defaultModel={config.model}
             // onChange={() => {}}
             onChange={(v) => setModel(v)}
           />
