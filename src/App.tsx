@@ -6,7 +6,7 @@ import { InstalledLLMs } from "./llm/installed"
 import { ConfigDialog } from "./ConfigDialog"
 import { InstructionPanel } from "./Instrunctions"
 import { LLMPanel } from "./LLMPanel"
-import { loadConfiguration, saveConfiguration } from "./configurations"
+import { loadConfig, saveConfig } from "./configurations"
 
 function App() {
   const [configDialogOpen, setConfigDialogOpen] = useState(false)
@@ -27,11 +27,11 @@ function App() {
   }
 
   const [panelIds, setPanelIds] = useState<string[]>(
-    () => JSON.parse(loadConfiguration("panelIds", "") || "[]") as string[],
+    () => JSON.parse(loadConfig("panelIds", "") || "[]") as string[],
   )
 
   useEffect(() => {
-    saveConfiguration("panelIds", "", JSON.stringify(panelIds))
+    saveConfig("panelIds", "", JSON.stringify(panelIds))
   }, [panelIds])
 
   return (

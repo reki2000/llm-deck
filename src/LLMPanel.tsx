@@ -5,8 +5,7 @@ import { InstalledLLMs } from "./llm/installed"
 import { llmProvider, llmStreahBreaker as llmStreamBreaker } from "./llm/llm"
 
 import TexMarkdown from "./TexMarkdown"
-import { loadConfiguration, saveConfiguration } from "./configurations"
-import { loadCredential } from "./credential"
+import { loadConfig, saveConfig } from "./configurations"
 
 import { useResponse } from "./response"
 import { SpeechButton } from "./speech/SpeechButton"
@@ -92,18 +91,18 @@ const ResponseField = ({ text, markdown }: { text: string; markdown: boolean }) 
 
 export type PanelConfig = {
   id: string
-  llmId: number
+  llmId: string
   model: string
 }
 
-const loadConfig = (id: string) => {
+const loadPanelConfig = (id: string) => {
   return JSON.parse(
-    loadConfiguration(`panel${id}`, "") || `{"id":${id},"llmId":1,"model":""}`,
+    loadConfig("panel", id) || `{"id":${id} ,"llmId":"openai","model":""}`,
   ) as PanelConfig
 }
 
-const saveConfig = (config: PanelConfig) => {
-  saveConfiguration(`panel${config.id}`, "", JSON.stringify(config))
+const savePanelConfig = (config: PanelConfig) => {
+  saveConfig("panel", config.id, JSON.stringify(config))
 }
 
 // LLMPanel is a component that displays the UI of the configurations for a single LLM provider.
@@ -125,15 +124,15 @@ export const LLMPanel = ({
 }) => {
   const [markdown, setMarkdown] = useState(true)
 
-  const [config, setConfig] = useState(() => loadConfig(id))
-  const [llmId, setLlmId] = useState(() => config.llmId)
-  const llm = InstalledLLMs[llmId]
-  const credential = llm.apiKey || loadCredential(llm.name)
+  const [config, setConfig] = useState(loadPanelConfig(id))
+  const [llmId, setLlmId] = useState(config.llmId)
+  const llm = InstalledLLMs.find((llm) => llm.id === llmId) || InstalledLLMs[0]
+  const credential = loadConfig("config", llm.id) || llm.localApiKey
 
   const [model, setModel] = useState(config.model || llm.defaultModel)
 
   useEffect(() => {
-    saveConfig(config)
+    savePanelConfig(config)
   }, [config])
 
   useEffect(() => {
@@ -172,10 +171,10 @@ export const LLMPanel = ({
             select
             label="LLM"
             value={config.llmId}
-            onChange={(e) => setLlmId(+(e.target.value || "0"))}
+            onChange={(e) => setLlmId(e.target.value)}
           >
-            {InstalledLLMs.map((llm, i) => (
-              <MenuItem key={llm.name} value={i}>
+            {InstalledLLMs.map((llm) => (
+              <MenuItem key={llm.name} value={llm.id}>
                 {llm.name}
               </MenuItem>
             ))}

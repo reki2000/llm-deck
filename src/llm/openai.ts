@@ -35,10 +35,11 @@ const generate: llmGenerate = async (apiKey, instruction, prompt, on, opts) => {
 }
 
 export const openAIProvider: llmProvider = {
+  id: "openai",
   name: "OpenAI",
   start: generate,
   apiKeyLabel: "OPENAI_API_KEY",
-  apiKey: import.meta.env.VITE_OPENAI_API_KEY,
+  localApiKey: import.meta.env.VITE_OPENAI_API_KEY,
   models: listModels,
-  defaultModel: "gpt-4-turbo",
+  defaultModel: "gpt-4o",
 }

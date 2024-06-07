@@ -11,24 +11,27 @@ import {
   Typography,
 } from "@mui/material"
 import { useEffect, useState } from "react"
-import { loadConfiguration, saveConfiguration } from "./configurations"
+import { loadConfig, saveConfig } from "./configurations"
 
 type Instructions = { [id: string]: string }
 
 export const InstructionPanel = ({ onChange }: { onChange: (s: string) => void }) => {
-  const [instructions, setInstructions] = useState<Instructions>(() => {
-    return JSON.parse(loadConfiguration("instructions", "") || "{}") as Instructions
-  })
-  const [selectedId, setSelectedId] = useState("")
+  const [instructions, setInstructions] = useState<Instructions>(
+    () => JSON.parse(loadConfig("instructions", "") || "{}") as Instructions,
+  )
+
+  const [selectedId, setSelectedId] = useState(() => loadConfig("selectedInstruction", "") || "")
+
   const [addDialogOpen, setAddDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
 
   const selected = instructions[selectedId] || ""
 
   useEffect(() => {
-    saveConfiguration("instructions", "", JSON.stringify(instructions))
+    saveConfig("instructions", "", JSON.stringify(instructions))
+    saveConfig("selectedInstruction", "", selectedId)
     onChange(selected)
-  }, [instructions, selected, onChange])
+  }, [instructions, selected, selectedId, onChange])
 
   return (
     <Stack direction="row" alignItems="center" spacing={1}>

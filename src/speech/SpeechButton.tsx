@@ -4,21 +4,22 @@ import { useEffect, useState } from "react"
 import PauseCircleOutlinedIcon from "@mui/icons-material/PauseCircleOutlined"
 import PlayCircleOutlinedIcon from "@mui/icons-material/PlayCircleOutlined"
 
-import { loadCredential } from "../credential"
+import { loadConfig } from "../configurations"
 import { ChattyKathy } from "./ChattyKathy"
 import { detectLang } from "./langDetector"
 import { getVoiceByName, recommendVoice } from "./pollyVoices"
 
 export const SpeechButton = ({ text, working }: { text: string; working: boolean }) => {
-  const voiceEn = loadCredential("polly-voice-en")
-  const voiceJp = loadCredential("polly-voice-jp")
+  const voiceEn = loadConfig("config", "polly-voice-en")
+  const voiceJp = loadConfig("config", "polly-voice-jp")
 
   const [chatter] = useState(() => {
-    if (loadCredential("polly") === "") {
+    const cfg = loadConfig("config", "polly")
+    if (cfg === "") {
       return null
     }
 
-    const [region, accessKeyId, secretAccessKey] = loadCredential("polly").split(":")
+    const [region, accessKeyId, secretAccessKey] = cfg.split(":")
     const chatter = ChattyKathy({
       awsCredentials: async () => ({
         accessKeyId,

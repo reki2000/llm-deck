@@ -6,13 +6,13 @@ const response = [
 ]
 
 export const dummyProvider: llmProvider = {
-  name: "dummy",
+  id: "dummy",
+  name: "Dummy",
   apiKeyLabel: "API_KEY",
-  apiKey: "",
+  localApiKey: "",
   models: async () => ["dummy-model", "dummy-model-1"],
   start: async (_, __, prompt, handle) => {
     handle(prompt, false)
-    let alive = true
     ;(async () => {
       for (const text of response) {
         await new Promise((resolve) => setTimeout(resolve, 500))
@@ -20,9 +20,7 @@ export const dummyProvider: llmProvider = {
       }
       handle("completed.", true)
     })()
-    return () => {
-      alive = false
-    }
+    return () => {}
   },
   defaultModel: "dummy-model-1",
 }

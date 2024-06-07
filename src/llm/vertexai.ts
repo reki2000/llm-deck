@@ -17,10 +17,7 @@ const listModels: llmListModels = async (apiKey: string) => {
 const generate: llmGenerate = async (apiKey, instruction, input, on, opts) => {
   const genAI = new GoogleGenerativeAI(apiKey)
 
-  const generativeModel = genAI.getGenerativeModel(
-    { model: opts.model},
-    { apiVersion: 'v1beta', },
-  );
+  const generativeModel = genAI.getGenerativeModel({ model: opts.model })
 
   const chat = generativeModel.startChat({})
   const chatInput1 = input
@@ -51,10 +48,11 @@ const generate: llmGenerate = async (apiKey, instruction, input, on, opts) => {
 }
 
 export const vertexAIProvider: llmProvider = {
+  id: "vertexai",
   name: "Vertex AI",
   start: generate,
-  apiKeyLabel: "ACCESS_KEY",
-  apiKey: import.meta.env.VITE_GCP_ACCESS_KEY,
   models: listModels,
-  defaultModel: "gemini-1.0-pro-latest",
+  defaultModel: "gemini-1.5-pro",
+  apiKeyLabel: "ACCESS_KEY",
+  localApiKey: import.meta.env.VITE_GCP_ACCESS_KEY,
 }

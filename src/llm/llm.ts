@@ -18,10 +18,11 @@ export type llmOptions = {
 }
 
 export type llmProvider = {
-  name: string
-  apiKeyLabel: string
-  apiKey: string
+  id: string // internal id to be used in the persistent storage
+  name: string // display name
   models: (s: string) => Promise<string[]>
-  defaultModel: string
   start: llmGenerate
+  defaultModel: string
+  apiKeyLabel: string // label for the API key input field
+  localApiKey: string // default value for the API key input field if needed
 }
