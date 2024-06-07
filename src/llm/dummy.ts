@@ -1,5 +1,10 @@
 import { llmProvider } from "./llm"
 
+const response = [
+  "`short line`",
+  "\n```text\n loooooong lineeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee code block \n```\n",
+]
+
 export const dummyProvider: llmProvider = {
   name: "dummy",
   apiKeyLabel: "API_KEY",
@@ -9,9 +14,9 @@ export const dummyProvider: llmProvider = {
     handle(prompt, false)
     let alive = true
     ;(async () => {
-      for (let i = 0; i <= 3 && alive; i++) {
+      for (const text of response) {
         await new Promise((resolve) => setTimeout(resolve, 500))
-        handle(`"Hello" といいました。`, false)
+        handle(`${text} `, false)
       }
       handle("completed.", true)
     })()

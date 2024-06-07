@@ -172,16 +172,13 @@ export const LLMPanel = ({
             select
             label="LLM"
             value={config.llmId}
-            onChange={(e) => setLlmId(+(e.target.value || "1"))}
+            onChange={(e) => setLlmId(+(e.target.value || "0"))}
           >
-            {InstalledLLMs.map(
-              (llm, i) =>
-                i !== 0 && (
-                  <MenuItem key={llm.name} value={i}>
-                    {llm.name}
-                  </MenuItem>
-                ),
-            )}
+            {InstalledLLMs.map((llm, i) => (
+              <MenuItem key={llm.name} value={i}>
+                {llm.name}
+              </MenuItem>
+            ))}
           </TextField>
           <ModelSelect
             llm={llm}

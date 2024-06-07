@@ -4,7 +4,22 @@ import rehypeKatex from "rehype-katex"
 import remarkMath from "remark-math"
 
 const TexMarkdown = (props: Readonly<Options>) => (
-  <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]} {...props} />
+  <ReactMarkdown
+    components={{
+      pre: (props) => (
+        <pre
+          style={{
+            whiteSpace: "pre",
+            overflowX: "auto",
+          }}
+          {...props}
+        />
+      ),
+    }}
+    remarkPlugins={[remarkMath]}
+    rehypePlugins={[rehypeKatex]}
+    {...props}
+  />
 )
 
 export default TexMarkdown
