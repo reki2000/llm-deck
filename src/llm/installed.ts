@@ -5,7 +5,7 @@ import { openAIProvider } from "./openai"
 import { vertexAIProvider } from "./vertexai"
 
 export const InstalledLLMs: llmProvider[] = [
-  dummyProvider,
+  ...(import.meta.env.DEV ? [dummyProvider] : []),
   openAIProvider,
   vertexAIProvider,
   bedrockProvider,
