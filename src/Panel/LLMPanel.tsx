@@ -51,9 +51,9 @@ export const LLMPanel = ({
   const { response, working } = useResponse({
     sessionId,
     starter: (onDelta) => {
-      const { llm, model } = loadPanelConfig(id)
+      const { llm, credential, model } = loadPanelConfig(id)
       const starter = async () => {
-        breaker.current = await llm.start(llm.credential, instruction, prompt, onDelta, {
+        breaker.current = await llm.start(credential, instruction, prompt, onDelta, {
           model: model,
         })
       }
