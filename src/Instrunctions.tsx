@@ -28,10 +28,13 @@ export const InstructionPanel = ({ onChange }: { onChange: (s: string) => void }
   const selected = instructions[selectedId] || ""
 
   useEffect(() => {
-    saveConfig("instructions", "", JSON.stringify(instructions))
     saveConfig("selectedInstruction", "", selectedId)
     onChange(selected)
-  }, [instructions, selected, selectedId, onChange])
+  }, [selected, selectedId, onChange])
+
+  useEffect(() => {
+    saveConfig("instructions", "", JSON.stringify(instructions))
+  }, [instructions])
 
   return (
     <Stack direction="row" alignItems="center" spacing={1}>

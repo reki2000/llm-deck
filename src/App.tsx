@@ -5,7 +5,7 @@ import { InstalledLLMs } from "./llm/installed"
 
 import { ConfigDialog } from "./ConfigDialog"
 import { InstructionPanel } from "./Instrunctions"
-import { LLMPanel } from "./LLMPanel"
+import { LLMPanel } from "./Panel/LLMPanel"
 import { loadConfig, saveConfig } from "./configurations"
 
 function App() {

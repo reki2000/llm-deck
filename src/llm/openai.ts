@@ -38,8 +38,8 @@ export const openAIProvider: llmProvider = {
   id: "openai",
   name: "OpenAI",
   start: generate,
+  models: listModels,
   apiKeyLabel: "OPENAI_API_KEY",
   localApiKey: import.meta.env.VITE_OPENAI_API_KEY,
-  models: listModels,
   defaultModel: "gpt-4o",
 }

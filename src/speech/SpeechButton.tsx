@@ -10,10 +10,7 @@ import { detectLang } from "./langDetector"
 import { getVoiceByName, recommendVoice } from "./pollyVoices"
 
 export const SpeechButton = ({ text, working }: { text: string; working: boolean }) => {
-  const voiceEn = loadConfig("config", "polly-voice-en")
-  const voiceJp = loadConfig("config", "polly-voice-jp")
-
-  const [chatter] = useState(() => {
+  const reloadChatter = () => {
     const cfg = loadConfig("config", "polly")
     if (cfg === "") {
       return null
@@ -26,12 +23,14 @@ export const SpeechButton = ({ text, working }: { text: string; working: boolean
         secretAccessKey,
       }),
       awsRegion: region,
-      defaultVoice: getVoiceByName(voiceJp),
+      defaultVoice: getVoiceByName(loadConfig("config", "polly-voice-jp")),
       speedRate: 1.2,
     })
-    return chatter
-  })
 
+    return chatter
+  }
+
+  const [chatter, setChatter] = useState(() => reloadChatter())
   const [speaking, setSpeaking] = useState(false)
   const [willSpeakFrom, setWillSpeakFrom] = useState(0)
 
@@ -47,9 +46,9 @@ export const SpeechButton = ({ text, working }: { text: string; working: boolean
           const lang = detectLang(sentence)
           const voice =
             lang === "ja-JP"
-              ? getVoiceByName(voiceJp)
+              ? getVoiceByName(loadConfig("config", "polly-voice-jp"))
               : lang === "en-US"
-                ? getVoiceByName(voiceEn)
+                ? getVoiceByName(loadConfig("config", "polly-voice-en"))
                 : recommendVoice(lang)
           console.log("speaking", lang, "[", voice, "]", sentence)
           chatter?.Speak(sentence, () => {}, voice)
@@ -58,24 +57,28 @@ export const SpeechButton = ({ text, working }: { text: string; working: boolean
         handleSpeakStop()
       }
     }
-  }, [speaking, text, willSpeakFrom, chatter, working, voiceEn, voiceJp])
+  }, [speaking, text, chatter, willSpeakFrom, working])
 
   const handleSpeakStop = () => {
     chatter?.ShutUp()
+    setChatter(null)
     setWillSpeakFrom(0)
   }
 
   return (
-    chatter && (
-      <Button
-        onClick={() => {
-          setSpeaking((s) => !s)
-          speaking && handleSpeakStop()
-        }}
-      >
-        {speaking ? <PauseCircleOutlinedIcon /> : <PlayCircleOutlinedIcon />}
-      </Button>
-    )
+    <Button
+      onClick={() => {
+        if (speaking) {
+          setSpeaking(false)
+          handleSpeakStop()
+        } else {
+          setSpeaking(true)
+          setChatter(reloadChatter())
+        }
+      }}
+    >
+      {speaking ? <PauseCircleOutlinedIcon /> : <PlayCircleOutlinedIcon />}
+    </Button>
   )
 }
 
