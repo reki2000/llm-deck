@@ -1,31 +1,24 @@
+// src/Panel/ModelSelect.tsx
 import { CircularProgress, MenuItem, TextField } from "@mui/material"
 import { useEffect, useState } from "react"
-import { llmProvider } from "../llm/llm"
+import { llmProvider } from "../../llm/llm"
+import { useModels } from "./useModels"
 
-export const ModelSelect = ({
+interface ModelSelectProps {
+  llm: llmProvider
+  credential: string
+  defaultModel: string
+  onChange: (model: string) => void
+}
+
+export const ModelSelect: React.FC<ModelSelectProps> = ({
   llm,
   credential,
   defaultModel,
   onChange,
-}: {
-  llm: llmProvider
-  credential: string
-  defaultModel: string
-  onChange: (_: string) => void
 }) => {
+  const { models, loading } = useModels(llm, credential)
   const [model, setModel] = useState(defaultModel)
-  const [models, setModels] = useState<string[]>([])
-
-  useEffect(() => {
-    const fetchModels = async () => {
-      setModels([])
-      const availableModels = await llm.models(credential)
-      availableModels.sort()
-      setModels(availableModels)
-    }
-
-    fetchModels()
-  }, [credential, llm])
 
   useEffect(() => {
     if (models.length === 0) {
@@ -35,16 +28,18 @@ export const ModelSelect = ({
       ? defaultModel
       : models.includes(llm.defaultModel)
         ? llm.defaultModel
-        : models.at(0) || ""
+        : models[0] || ""
     if (selectedModel !== defaultModel) {
       setModel(selectedModel)
       onChange(selectedModel)
     }
-  }, [models, defaultModel, onChange, llm.defaultModel])
+  }, [models, onChange, llm.defaultModel, models[0]])
 
-  return models.length === 0 || !models.includes(model) ? (
-    <CircularProgress />
-  ) : (
+  if (loading) {
+    return <CircularProgress />
+  }
+
+  return (
     <TextField
       select
       label={llm.name}

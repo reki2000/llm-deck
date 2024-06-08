@@ -4,13 +4,13 @@ export type llmGenerate = (
   prompt: string,
   handleDelta: llmStreamHandler,
   opts: llmOptions,
-) => Promise<llmStreahBreaker>
+) => Promise<llmStreamBreaker>
 
 export type llmListModels = (key: string) => Promise<string[]>
 
 export type llmStreamHandler = (delta: string, done: boolean) => void
 
-export type llmStreahBreaker = () => void
+export type llmStreamBreaker = () => void
 
 export type llmOptions = {
   model: string

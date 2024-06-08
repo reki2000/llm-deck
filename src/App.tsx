@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { InstalledLLMs } from "./llm/installed"
 
 import { ConfigDialog } from "./ConfigDialog"
-import { InstructionPanel } from "./Instrunctions"
+import InstructionPanel from "./Instruction/InstructionPanel"
 import { LLMPanel } from "./Panel/LLMPanel"
 import { loadConfig, saveConfig } from "./configurations"
 

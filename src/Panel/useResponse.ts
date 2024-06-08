@@ -1,14 +1,12 @@
 import { useEffect, useRef, useState } from "react"
 
-export const useResponse = ({
-  sessionId,
-  starter,
-  onEnd,
-}: {
+interface UseResponseParams {
   sessionId: string
   starter: (onDelta: (delta: string, done: boolean) => void) => void
   onEnd: () => void
-}) => {
+}
+
+export const useResponse = ({ sessionId, starter, onEnd }: UseResponseParams) => {
   const [response, setResponse] = useState("")
   const [working, setWorking] = useState(false)
 
