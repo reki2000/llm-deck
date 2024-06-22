@@ -1,7 +1,6 @@
 // src/hooks/useLLMResponse.ts
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { llmStreamBreaker } from "../llm/llm"
-import { useResponse } from "./useResponse"
 
 import { loadPanelConfig } from "./panelConfigUtils"
 
@@ -12,25 +11,44 @@ export const useLLMResponse = (
   id: string,
   onEnd: () => void,
 ) => {
+  const [response, setResponse] = useState("")
+  const [working, setWorking] = useState(false)
+
   const breaker = useRef<llmStreamBreaker | null>(null)
-  const [markdown, setMarkdown] = useState(true)
 
   if (sessionId === "" && breaker.current) {
     breaker.current()
     breaker.current = null
   }
 
-  const { response, working } = useResponse({
-    sessionId,
-    starter: (onDelta) => {
-      const { llm, credential, model } = loadPanelConfig(id)
-      const starter = async () => {
-        breaker.current = await llm.start(credential, instruction, prompt, onDelta, { model })
-      }
-      starter()
-    },
-    onEnd,
-  })
+  const onDelta = (delta: string, done: boolean) => {
+    setResponse((s) => `${s}${delta}`)
+    if (done) {
+      onEnd()
+      setWorking(false)
+    }
+  }
 
-  return { response, working, markdown, setMarkdown }
+  const currentSessionId = useRef("")
+
+  useEffect(() => {
+    if (sessionId === "" && currentSessionId.current !== "") {
+      onEnd()
+      currentSessionId.current = ""
+      setWorking(false)
+      return
+    }
+
+    if (currentSessionId.current !== sessionId) {
+      currentSessionId.current = sessionId
+      setResponse("")
+      setWorking(true)
+      const { llm, credential, model } = loadPanelConfig(id)
+      ;(async () => {
+        breaker.current = await llm.start(credential, instruction, prompt, onDelta, { model })
+      })()
+    }
+  }, [sessionId, onEnd, onDelta, instruction, prompt, id])
+
+  return { response, working }
 }

@@ -1,5 +1,6 @@
 // src/Panel/LLMPanel.tsx
 import { Button, Stack } from "@mui/material"
+import { useState } from "react"
 import { SpeechButton } from "../speech/SpeechButton"
 import ResponseField from "./ResponseField"
 import { LLMSelect } from "./Select/LLMSelect"
@@ -15,7 +16,9 @@ interface LLMPanelProps {
 }
 
 export const LLMPanel: React.FC<LLMPanelProps> = (props) => {
-  const { response, working, markdown, setMarkdown } = useLLMResponse(
+  const [markdown, setMarkdown] = useState(true)
+
+  const { response, working } = useLLMResponse(
     props.sessionId,
     props.instruction,
     props.prompt,
