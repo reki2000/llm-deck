@@ -14,17 +14,30 @@ const listModels: llmListModels = async (apiKey: string) => {
   return list
 }
 
-const generate: llmGenerate = async (apiKey, instruction, input, on, opts) => {
+const generate: llmGenerate = async (apiKey, session, on, opts) => {
   const genAI = new GoogleGenerativeAI(apiKey)
 
-  const generativeModel = genAI.getGenerativeModel({ model: opts.model })
+  const generativeModel = genAI.getGenerativeModel({
+    model: opts.model,
+    systemInstruction: {
+      role: "system",
+      parts: session.getInstruction().map((i) => ({ text: i })),
+    },
+  })
 
-  const chat = generativeModel.startChat({})
-  const chatInput1 = input
+  const chat = generativeModel.startChat({
+    history: session
+      .getHistory()
+      .filter((h) => h.role !== "system")
+      .map((h) => ({
+        role: h.role === "assistant" ? "model" : "user",
+        parts: [{ text: h.text }],
+      })),
+  })
   let cancelled = false
   ;(async () => {
     try {
-      const result1 = await chat.sendMessageStream(`${instruction} #### ${chatInput1}`)
+      const result1 = await chat.sendMessageStream("continue")
       for await (const item of result1.stream) {
         if (cancelled) {
           break

@@ -2,12 +2,12 @@
 import { useEffect, useRef, useState } from "react"
 import { llmStreamBreaker } from "../llm/llm"
 
+import { Session } from "../llm/session"
 import { loadPanelConfig } from "./panelConfigUtils"
 
 export const useLLMResponse = (
   sessionId: string,
-  instruction: string,
-  prompt: string,
+  session: Session,
   id: string,
   onEnd: () => void,
 ) => {
@@ -45,10 +45,10 @@ export const useLLMResponse = (
       setWorking(true)
       const { llm, credential, model } = loadPanelConfig(id)
       ;(async () => {
-        breaker.current = await llm.start(credential, instruction, prompt, onDelta, { model })
+        breaker.current = await llm.start(credential, session, onDelta, { model })
       })()
     }
-  }, [sessionId, onEnd, onDelta, instruction, prompt, id])
+  }, [sessionId, onEnd, onDelta, session, id])
 
   return { response, working }
 }
