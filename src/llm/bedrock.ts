@@ -1,14 +1,14 @@
-import { BedrockClient, ListFoundationModelsCommand, ModelModality } from "@aws-sdk/client-bedrock"
+import { BedrockClient, ListFoundationModelsCommand, ModelModality } from '@aws-sdk/client-bedrock'
 import {
   BedrockRuntimeClient,
   InvokeModelWithResponseStreamCommand,
   InvokeModelWithResponseStreamCommandInput,
-} from "@aws-sdk/client-bedrock-runtime"
+} from '@aws-sdk/client-bedrock-runtime'
 
-import { llmGenerate, llmListModels } from "./llm"
+import { llmGenerate, llmListModels } from './llm'
 
 const listModels: llmListModels = async (apiKey: string) => {
-  const keys = apiKey.split(":")
+  const keys = apiKey.split(':')
   const client = new BedrockClient({
     region: keys[0],
     credentials: {
@@ -28,12 +28,17 @@ const listModels: llmListModels = async (apiKey: string) => {
 
   const response = await client.send(command)
 
-  return response.modelSummaries?.map((m) => m.modelId || "").filter((n) => n !== "") || []
+  return (
+    response.modelSummaries
+      ?.filter((m) => m.responseStreamingSupported)
+      .map((m) => m.modelId)
+      .filter((n) => n) || []
+  )
 }
 
 // apiKey format: AWS_REGION:AWS_ACCESS_KEY_ID:AWS_SECRET_ACCESS_KEY
 const generate: llmGenerate = async (apiKey, session, on, opts) => {
-  const keys = apiKey.split(":")
+  const keys = apiKey.split(':')
 
   const client = new BedrockRuntimeClient({
     region: keys[0],
@@ -43,43 +48,42 @@ const generate: llmGenerate = async (apiKey, session, on, opts) => {
     },
   })
 
-  const payload = opts.model.includes("claude-3")
+  const payload = opts.model.includes('claude')
     ? {
+        system: session.getInstruction().join(' '),
         messages: session
           .getHistory()
-          .flatMap((h) =>
-            h.role === "system"
-              ? [
-                  { role: "user", text: h.text },
-                  { role: "assistant", text: "sure." },
-                ]
-              : [h],
-          )
+          .filter((h) => h.role !== 'system')
           .map((h) => ({
             role: h.role,
-            content: [{ type: "text", text: h.text }],
+            content: [{ type: 'text', text: h.text }],
           })),
-        anthropic_version: "bedrock-2023-05-31",
-        max_tokens: 4096,
+        anthropic_version: 'bedrock-2023-05-31',
+        max_tokens: 16 * 1024,
       }
-    : {
-        prompt: `${session
-          .getHistory()
-          .map((h) => `${h.role}:${h.text}`)
-          .join(" ")} assistant:`,
-        max_tokens_to_sample: 10000,
-        temperature: 0.8,
-        top_k: 250,
-        top_p: 1,
-      }
+    : opts.model.includes('meta.llama')
+      ? {
+          prompt: `<|begin_of_text|>\n${session.getHistory().map(({ role, text }) => `<|start_header_id|>${role}<|end_header_id|>\n${text}<|eot_id|>\n<|start_header_id|>assistant<|end_header_id|>`)}`,
+          top_p: 1,
+        }
+      : {
+          prompt: `${session
+            .getHistory()
+            .map((h) => `${h.role}:${h.text}`)
+            .join(' ')} assistant:`,
+          max_tokens_to_sample: 16 * 1024,
+          temperature: 0.8,
+          top_k: 250,
+          top_p: 1,
+        }
 
   const params: InvokeModelWithResponseStreamCommandInput = {
     modelId: opts.model,
-    contentType: "application/json",
-    accept: "application/json",
+    contentType: 'application/json',
+    accept: 'application/json',
     body: JSON.stringify(payload),
   }
-  const decoder = new TextDecoder("utf-8")
+  const decoder = new TextDecoder('utf-8')
   const command = new InvokeModelWithResponseStreamCommand(params)
   let cancelled = false
   ;(async () => {
@@ -91,10 +95,10 @@ const generate: llmGenerate = async (apiKey, session, on, opts) => {
         }
         if (event.chunk?.bytes) {
           const chunk = JSON.parse(decoder.decode(event.chunk.bytes))
-          on(chunk?.delta?.text || chunk.completion || "", false) // change this line
+          on(chunk?.delta?.text || chunk.completion || chunk.generation || '', false) // change this line
         }
       }
-      on("", true)
+      on('', true)
     } catch (e) {
       if (e instanceof Error) {
         on(`Error: ${e.message}`, true)
@@ -110,11 +114,11 @@ const generate: llmGenerate = async (apiKey, session, on, opts) => {
 }
 
 export const bedrockProvider = {
-  id: "bedrock",
-  name: "Bedrock",
+  id: 'bedrock',
+  name: 'Bedrock',
   start: generate,
   models: listModels,
-  defaultModel: "anthropic.claude-3-sonnet-20240229-v1:0",
-  apiKeyLabel: "REGION:ACCESS_KEY_ID:SECRET_ACCESS_KEY",
+  defaultModel: 'anthropic.claude-3-sonnet-20240229-v1:0',
+  apiKeyLabel: 'REGION:ACCESS_KEY_ID:SECRET_ACCESS_KEY',
   localApiKey: import.meta.env.VITE_AWS_CREDENTIALS,
 }
