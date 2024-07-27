@@ -31,7 +31,7 @@ const listModels: llmListModels = async (apiKey: string) => {
   return (
     response.modelSummaries
       ?.filter((m) => m.responseStreamingSupported)
-      .map((m) => m.modelId)
+      .map((m) => m.modelId || '')
       .filter((n) => n) || []
   )
 }
