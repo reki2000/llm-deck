@@ -32,7 +32,7 @@ const listModels: llmListModels = async (apiKey: string) => {
 }
 
 // apiKey format: AWS_REGION:AWS_ACCESS_KEY_ID:AWS_SECRET_ACCESS_KEY
-const generate: llmGenerate = async (apiKey, instruction, input, on, opts) => {
+const generate: llmGenerate = async (apiKey, session, on, opts) => {
   const keys = apiKey.split(":")
 
   const client = new BedrockRuntimeClient({
@@ -45,23 +45,28 @@ const generate: llmGenerate = async (apiKey, instruction, input, on, opts) => {
 
   const payload = opts.model.includes("claude-3")
     ? {
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "text",
-                text: `Following is instruction: ${instruction}`,
-              },
-              { type: "text", text: `User's question is here: ${input}` },
-            ],
-          },
-        ],
+        messages: session
+          .getHistory()
+          .flatMap((h) =>
+            h.role === "system"
+              ? [
+                  { role: "user", text: h.text },
+                  { role: "assistant", text: "sure." },
+                ]
+              : [h],
+          )
+          .map((h) => ({
+            role: h.role,
+            content: [{ type: "text", text: h.text }],
+          })),
         anthropic_version: "bedrock-2023-05-31",
         max_tokens: 4096,
       }
     : {
-        prompt: `Human:${instruction} ${input} Assistant:`,
+        prompt: `${session
+          .getHistory()
+          .map((h) => `${h.role}:${h.text}`)
+          .join(" ")} assistant:`,
         max_tokens_to_sample: 10000,
         temperature: 0.8,
         top_k: 250,

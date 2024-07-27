@@ -1,58 +1,62 @@
-import { Box, Button, CssBaseline, Grid, Link, Stack, TextField } from "@mui/material"
 
-import { useEffect, useState } from "react"
-import { InstalledLLMs } from "./llm/installed"
+import { useState } from "react";
+import { InstalledLLMs } from "./llm/installed";
 
-import { ConfigDialog } from "./ConfigDialog"
-import InstructionPanel from "./Instruction/InstructionPanel"
-import { LLMPanel } from "./Panel/LLMPanel"
-import { loadConfig, saveConfig } from "./configurations"
+import { Box, Button, CssBaseline, Grid, Link, Stack, TextField } from "@mui/material";
+import { ConfigDialog } from "./ConfigDialog";
+import InstructionPanel from "./Instruction/InstructionPanel";
+import { LLMPanel } from "./Panel/LLMPanel";
+
+import AddIcon from '@mui/icons-material/Add';
+import SendIcon from '@mui/icons-material/Send';
+import { usePanelContext } from "./PanelContext";
+import { MinWidthButton } from "./components/miniButton";
+
+
+const useConfigDialog = () => {
+  const [configDialogOpen, setConfigDialogOpen] = useState(false)
+
+  return  {dialog: configDialogOpen && (
+    <ConfigDialog
+      open={configDialogOpen}
+      llmProviders={InstalledLLMs}
+      onClose={() => {
+        setConfigDialogOpen(false)
+      }}
+    />
+  ), open: () => setConfigDialogOpen(true)}
+}
 
 function App() {
-  const [configDialogOpen, setConfigDialogOpen] = useState(false)
-  const [prompt, setPrompt] = useState("")
-  const [sending, setSending] = useState(0)
-  const [sessionId, setSessionId] = useState("")
+  const {dialog: configDialog, open: openConfigDialog} = useConfigDialog()
 
+  const [prompt, setPrompt] = useState("")
   const [instruction, setInstruction] = useState("")
 
+  const {panels, add, startAll, stopAll} = usePanelContext()
+  console.log("App:panels", panels)
+
+  const workingCount = Object.values(panels).filter((p)=>p).length
+
   const handleSend = async () => {
-    if (sending > 0) {
-      setSessionId("")
-      setSending(0)
+    if (workingCount > 0) {
+      stopAll()
     } else {
-      setSessionId(`${Math.random()}`)
-      setSending(panelIds.length)
+      startAll()
     }
   }
-
-  const [panelIds, setPanelIds] = useState<string[]>(
-    () => JSON.parse(loadConfig("panelIds", "") || "[]") as string[],
-  )
-
-  useEffect(() => {
-    saveConfig("panelIds", "", JSON.stringify(panelIds))
-  }, [panelIds])
 
   return (
     <>
       <CssBaseline />
-      <Stack spacing={2} p={2}>
+      <Stack spacing={1} p={2}>
         <Stack direction="row" spacing={2} display="flex" alignItems="center">
           <Box>LLM Deck</Box>
           <Link href="https://github.com/reki2000/llm-deck">GitHub</Link>
-          <Button variant="outlined" onClick={() => setConfigDialogOpen(true)}>
+          <Button variant="outlined" onClick={() => openConfigDialog()}>
             Config
           </Button>
-          {configDialogOpen && (
-            <ConfigDialog
-              open={configDialogOpen}
-              llmProviders={InstalledLLMs}
-              onClose={() => {
-                setConfigDialogOpen(false)
-              }}
-            />
-          )}
+          {configDialog}
         </Stack>
 
         <InstructionPanel onChange={setInstruction} />
@@ -71,41 +75,25 @@ function App() {
                 event.preventDefault()
               }
             }}
-            disabled={sending > 0}
+            disabled={workingCount > 0}
           />
-          <Button
-            variant="contained"
-            onClick={() => {
-              handleSend()
-            }}
-          >
-            {sending > 0 ? `Stop ${sending}` : "Send"}
-          </Button>
+          <MinWidthButton onClick={handleSend}>
+            {workingCount > 0 ? `Stop ${workingCount}` : <SendIcon/>}
+          </MinWidthButton>
+          <MinWidthButton size="small" onClick={add}>
+            <AddIcon/>
+          </MinWidthButton>
         </Stack>
-        <Grid container spacing={2}>
-          {panelIds.map((id) => (
+        <Grid container >
+          {Object.keys(panels).map((id) => (
             <Grid key={id} item xs={12} md={6} xl={4}>
               <LLMPanel
-                id={id}
-                sessionId={sessionId}
+                panelId={id}
                 instruction={instruction}
-                prompt={prompt}
-                onEnd={() => setSending((c) => (c > 0 ? c - 1 : 0))}
-                onClose={() => {
-                  setPanelIds((s) => s.filter((c) => c !== id))
-                }}
+                prompt={prompt} 
               />
             </Grid>
           ))}
-          <Box key="add-button">
-            <Button
-              onClick={() => {
-                setPanelIds((s) => [...s, `${new Date().getTime()}`])
-              }}
-            >
-              Add Panel
-            </Button>
-          </Box>
         </Grid>
       </Stack>
     </>

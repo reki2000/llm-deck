@@ -1,7 +1,8 @@
+import { Session } from "./session"
+
 export type llmGenerate = (
   credential: string,
-  instruction: string,
-  prompt: string,
+  session: Session,
   handleDelta: llmStreamHandler,
   opts: llmOptions,
 ) => Promise<llmStreamBreaker>

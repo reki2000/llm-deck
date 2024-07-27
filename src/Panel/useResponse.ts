@@ -1,39 +1,51 @@
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useRef, useState } from "react"
+import { llmStreamBreaker } from "../llm/llm"
+import { Session } from "../llm/session"
+import { loadPanelConfig } from "./panelConfigUtils"
 
-interface UseResponseParams {
-  sessionId: string
-  starter: (onDelta: (delta: string, done: boolean) => void) => void
-  onEnd: () => void
-}
-
-export const useResponse = ({ sessionId, starter, onEnd }: UseResponseParams) => {
+export const useResponse = (panelId: string, onEnd: () => void) => {
   const [response, setResponse] = useState("")
-  const [working, setWorking] = useState(false)
+  const working = useRef(false)
 
-  const currentSessionId = useRef("")
+  const breaker = useRef<llmStreamBreaker | null>(null)
 
-  useEffect(() => {
-    if (sessionId === "" && currentSessionId.current !== "") {
-      onEnd()
-      currentSessionId.current = ""
-      setWorking(false)
-      return
-    }
+  const stop = useCallback(() => {
+    breaker.current?.()
+    breaker.current = null
+    working.current = false
+  }, [])
 
-    if (currentSessionId.current !== sessionId) {
-      currentSessionId.current = sessionId
+  const onDelta = useCallback(
+    (delta: string, done: boolean) => {
+      setResponse((s) => `${s}${delta}`)
+      if (done) {
+        onEnd()
+        stop()
+      }
+    },
+    [stop, onEnd],
+  )
+
+  const startAsync = async (session: Session) => {
+    stop() // Use the onStop callback for consistency
+
+    const { llm, credential, model } = loadPanelConfig(panelId)
+    try {
       setResponse("")
-      setWorking(true)
-      starter((delta, done) => {
-        setResponse((s) => `${s}${delta}`)
-        if (done) {
-          onEnd()
-          setWorking(false)
-          return
-        }
-      })
+      working.current = true
+      breaker.current = await llm.start(credential, session, onDelta, { model })
+    } catch (error) {
+      console.error("Failed to start LLM session:", error)
+      stop() // Ensure we stop and clean up on error
     }
-  }, [sessionId, starter, onEnd])
+  }
 
-  return { response, working }
+  return {
+    response,
+    working: working.current,
+    start: (session: Session) => {
+      startAsync(session)
+    },
+    stop,
+  }
 }

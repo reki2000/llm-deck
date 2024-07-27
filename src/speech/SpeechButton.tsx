@@ -13,7 +13,7 @@ export const SpeechButton: React.FC<SpeechButtonProps> = ({ text, working }) => 
   const { speaking, toggleSpeaking } = useSpeech(text, working)
 
   return (
-    <Button onClick={toggleSpeaking}>
+    <Button sx={{minWidth: 'auto'}}  onClick={toggleSpeaking}>
       {speaking ? <PauseCircleOutlinedIcon /> : <PlayCircleOutlinedIcon />}
     </Button>
   )
