@@ -1,4 +1,7 @@
+import { ulid } from "ulid"
+
 export class Session {
+  id: string = ulid()
   private history: { role: Role; text: string }[] = []
 
   setInstruction(instruction: string) {
