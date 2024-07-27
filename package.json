@@ -19,6 +19,7 @@
     "@google/generative-ai": "^0.8.0",
     "@mui/icons-material": "^5.15.10",
     "@mui/material": "^5.15.10",
+    "jszip": "^3.10.1",
     "openai": "^4.28.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

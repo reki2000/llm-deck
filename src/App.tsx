@@ -11,6 +11,7 @@ import AddIcon from '@mui/icons-material/Add';
 import SendIcon from '@mui/icons-material/Send';
 import { usePanelContext } from "./PanelContext";
 import { MinWidthButton } from "./components/miniButton";
+import ZipUploader from "./components/zipUploader";
 
 
 const useConfigDialog = () => {
@@ -32,6 +33,7 @@ function App() {
 
   const [prompt, setPrompt] = useState("")
   const [instruction, setInstruction] = useState("")
+  const [fileContent, setFileContent] = useState("")
 
   const {panels, add, startAll, stopAll} = usePanelContext()
   console.log("App:panels", panels)
@@ -77,6 +79,7 @@ function App() {
             }}
             disabled={workingCount > 0}
           />
+          <ZipUploader onLoad={(s:string)=>setFileContent(s)}/>
           <MinWidthButton onClick={handleSend}>
             {workingCount > 0 ? `Stop ${workingCount}` : <SendIcon/>}
           </MinWidthButton>
@@ -90,7 +93,7 @@ function App() {
               <LLMPanel
                 panelId={id}
                 instruction={instruction}
-                prompt={prompt} 
+                prompt={`${prompt} ${fileContent}`}
               />
             </Grid>
           ))}
