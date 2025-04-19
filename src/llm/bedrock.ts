@@ -2,10 +2,10 @@ import { BedrockClient, ListFoundationModelsCommand, ModelModality } from '@aws-
 import {
   BedrockRuntimeClient,
   InvokeModelWithResponseStreamCommand,
-  InvokeModelWithResponseStreamCommandInput,
+  type InvokeModelWithResponseStreamCommandInput,
 } from '@aws-sdk/client-bedrock-runtime'
 
-import { llmGenerate, llmListModels } from './llm'
+import type { llmGenerate, llmListModels } from './llm'
 
 const listModels: llmListModels = async (apiKey: string) => {
   const keys = apiKey.split(':')
