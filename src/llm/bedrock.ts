@@ -32,7 +32,8 @@ const listModels: llmListModels = async (apiKey: string) => {
     response.modelSummaries
       ?.filter((m) => m.responseStreamingSupported)
       .map((m) => m.modelId || '')
-      .map((m) => (m.includes('claude-3-7-sonnet') ? `us.${m}` : m))
+      .map((m) => (m.includes('claude-3') ? `us.${m}` : m))
+      .map((m) => (m.includes('claude-sonnet-4') ? `global.${m}` : m))
       .filter((n) => n) || []
   )
 }
