@@ -21,7 +21,7 @@
     "@mui/icons-material": "^5.16.5",
     "@mui/material": "^5.16.5",
     "jszip": "^3.10.1",
-    "openai": "^4.53.2",
+    "openai": "^5.23.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-katex": "^3.0.1",

@@ -16,15 +16,28 @@ const generate: llmGenerate = async (apiKey, session, on, opts) => {
     dangerouslyAllowBrowser: true,
   })
 
-  const stream = await openai.beta.chat.completions
-    .stream({
-      model: opts.model,
-      messages: session.getHistory().map((h) => ({ role: h.role, content: h.text })),
-      stream: true,
-    })
-    .on('content', (delta) => on(delta, false))
-    .on('end', () => on('', true))
-    .on('error', (error) => on(`${error}`, true))
+  const input = session
+    .getHistory()
+    .map((h) => `${h.role}: ${h.text}`)
+    .join('\n')
+
+  const stream = openai.responses.stream({
+    model: opts.model,
+    input: input,
+    stream: true,
+  })
+  ;(async () => {
+    try {
+      for await (const event of stream) {
+        if (event.type === 'response.output_text.delta') {
+          on(event.delta, false)
+        }
+      }
+      on('', true)
+    } catch (error) {
+      on(`${error}`, true)
+    }
+  })()
 
   return () => {
     stream.controller.abort()
